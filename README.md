@@ -61,10 +61,7 @@ services:
     ports:
       - '80:80'
     environment:
-      # Where nginx proxies /api/ requests internally (Docker service name)
-      NGINX_BACKEND_URL: http://backend:3001
-      # Where the browser sends API requests.
-      # Default /api = same domain via nginx proxy.
+      # /api = same domain, proxied by nginx (default).
       # Set to https://api.example.com for cross-domain deployments.
       BACKEND_URL: /api
     depends_on:
