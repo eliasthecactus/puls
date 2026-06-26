@@ -61,10 +61,9 @@ services:
     ports:
       - '80:80'
     environment:
-      # Where the browser sends API requests (/api = same domain via nginx proxy)
-      BACKEND_URL: /api
-      # Where nginx forwards /api/ requests internally
-      NGINX_BACKEND_URL: http://backend:3001
+      # Where nginx forwards /api/ requests. Use the Docker service name for
+      # same-host deployments, or a full URL for cross-host deployments.
+      BACKEND_URL: http://backend:3001
     depends_on:
       backend:
         condition: service_healthy

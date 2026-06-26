@@ -42,7 +42,7 @@ export function CompletionScreen() {
   }, [selectedPlan, navigate]);
 
   function handleShare() {
-    const text = `Ich habe gerade "${selectedPlan ? ls(selectedPlan.name) : ''}" mit PULS absolviert! 💪`;
+    const text = `Ich habe gerade "${selectedPlan ? ls(selectedPlan.name) : ''}" mit PULS absolviert!`;
     if (navigator.share) {
       navigator.share({ title: 'PULS Workout', text }).catch(() => {});
     } else {
