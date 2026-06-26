@@ -61,9 +61,10 @@ services:
     ports:
       - '80:80'
     environment:
-      # /api = same domain, proxied by nginx (default).
-      # Set to https://api.example.com for cross-domain deployments.
+      # Where the browser sends API requests (/api = same domain via nginx proxy)
       BACKEND_URL: /api
+      # Where nginx forwards /api/ requests internally
+      NGINX_BACKEND_URL: http://backend:3001
     depends_on:
       backend:
         condition: service_healthy

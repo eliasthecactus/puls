@@ -46,6 +46,7 @@ services:
       - '80:80'
     environment:
       BACKEND_URL: /api
+      NGINX_BACKEND_URL: http://backend:3001
     depends_on:
       backend:
         condition: service_healthy
