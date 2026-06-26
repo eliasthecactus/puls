@@ -45,6 +45,7 @@ services:
     ports:
       - '80:80'
     environment:
+      NGINX_BACKEND_URL: http://backend:3001
       BACKEND_URL: /api
     depends_on:
       backend:
