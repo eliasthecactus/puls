@@ -18,8 +18,6 @@ A guided bodyweight workout app with timer, muscle visualization, streak trackin
 Create a `docker-compose.yml` and adjust the environment variables for your setup:
 
 ```yaml
-version: '3.9'
-
 services:
   postgres:
     image: postgres:16-alpine
