@@ -15,9 +15,64 @@ A guided bodyweight workout app with timer, muscle visualization, streak trackin
 
 **Prerequisites:** Docker and Docker Compose.
 
+Create a `docker-compose.yml` and adjust the environment variables for your setup:
+
+```yaml
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: puls
+      POSTGRES_USER: puls
+      POSTGRES_PASSWORD: changeme
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U puls -d puls']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: ghcr.io/eliasthecactus/puls-backend:latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://puls:changeme@postgres:5432/puls
+      SESSION_SECRET: replace_with_a_long_random_string_at_least_64_chars
+      RPID: localhost
+      ORIGIN: http://localhost
+      PORT: '3001'
+      NODE_ENV: production
+      COOKIE_SECURE: 'false'
+      CORS_ORIGIN: http://localhost
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3001/api/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    image: ghcr.io/eliasthecactus/puls-frontend:latest
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+```
+
+Then start the stack:
+
 ```bash
-git clone https://github.com/your-username/puls.git
-cd puls
 docker-compose up -d
 ```
 
@@ -62,8 +117,8 @@ The release version is `v{MAJOR}.{COMMITS}`.
 Every push to `main` builds and publishes Docker images to GHCR and creates a GitHub release.
 
 ```
-ghcr.io/<owner>/puls-frontend:latest
-ghcr.io/<owner>/puls-backend:latest
+ghcr.io/eliasthecactus/puls-frontend:latest
+ghcr.io/eliasthecactus/puls-backend:latest
 ```
 
 ## License
