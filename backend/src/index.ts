@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import morgan from 'morgan';
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
@@ -19,6 +20,8 @@ const secureCookie = process.env.COOKIE_SECURE === 'true';
 const PgSession = connectPgSimple(session);
 
 app.set('trust proxy', 1);
+
+app.use(morgan(':date[iso] :method :url :status :res[content-length]b - :response-time ms - ip::remote-addr'));
 
 app.use(
   helmet({
