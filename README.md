@@ -61,7 +61,9 @@ services:
     ports:
       - '80:80'
     environment:
-      BACKEND_URL: http://backend:3001
+      # Same-domain (default): requests go through nginx proxy
+      # Cross-domain: set to the full API URL, e.g. https://api.example.com
+      BACKEND_URL: /api
     depends_on:
       backend:
         condition: service_healthy
