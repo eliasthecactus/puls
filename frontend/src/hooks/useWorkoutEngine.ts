@@ -195,7 +195,10 @@ export function useWorkoutEngine(plan: WorkoutPlan, intensity: WorkoutIntensity)
           if (rounded <= 3 && rounded > 0) playBeep('countdown');
         }
 
-        if (next <= 0) advance();
+        if (next <= 0) {
+          advance();
+          return t; // hold previous value — advance() will reset; avoids flash of 0
+        }
         return next;
       });
     }, 100);

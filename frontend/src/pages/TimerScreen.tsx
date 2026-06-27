@@ -5,7 +5,6 @@ import { useWorkoutEngine } from '@/hooks/useWorkoutEngine';
 import { useT, useLocalStr } from '@/i18n';
 import { ProgressBar } from '@/components/ProgressBar';
 import { CountdownTimer } from '@/components/CountdownTimer';
-import { RepCounter } from '@/components/RepCounter';
 import { RestOverlay } from '@/components/RestOverlay';
 import { MuscleGroupView, MuscleTagList } from '@/components/MuscleGroupView';
 import { EXERCISE_IMAGES } from '@/data/exerciseImages';
@@ -50,15 +49,12 @@ export function TimerScreen() {
     progressPercent,
     currentRoundIndex,
     roundsForCurrentSection,
-    repCount,
     start,
     pause,
     resume,
     next,
     prev,
     skipRest,
-    incrementRep,
-    decrementRep,
   } = engine;
 
   useEffect(() => {
@@ -180,15 +176,6 @@ export function TimerScreen() {
       {/* Timer + reps + tip */}
       <div className="flex flex-col items-center gap-2 px-4 shrink-0">
         <CountdownTimer seconds={timeRemaining} onClick={() => setShowDemoModal(true)} />
-
-        {currentExercise?.reps !== undefined && (
-          <RepCounter
-            count={repCount}
-            target={currentExercise.reps}
-            onIncrement={incrementRep}
-            onDecrement={decrementRep}
-          />
-        )}
 
         {currentExercise?.formTip && (
           <div className="flex items-center gap-1.5 bg-white/5 rounded-xl px-3 py-2 max-w-xs text-center">

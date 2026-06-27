@@ -1,9 +1,9 @@
 export const EXERCISE_IMAGES: Record<string, string> = {
   // Push-ups
-  'fb-push-1':  'https://wger.de/media/exercise-images/1551/a6a9e561-3965-45c6-9f2b-ee671e1a3a45.png',
-  'ub-ch-1':    'https://wger.de/media/exercise-images/1551/a6a9e561-3965-45c6-9f2b-ee671e1a3a45.png',
-  'qk-3':       'https://wger.de/media/exercise-images/1551/a6a9e561-3965-45c6-9f2b-ee671e1a3a45.png',
-  'sa-bu-1':    'https://wger.de/media/exercise-images/1551/a6a9e561-3965-45c6-9f2b-ee671e1a3a45.png',
+  'fb-push-1':  '/exercises/pushup.gif',
+  'ub-ch-1':    '/exercises/pushup.gif',
+  'qk-3':       '/exercises/pushup.gif',
+  'sa-bu-1':    '/exercises/pushup.gif',
 
   // Diamond / close-grip push-up
   'ub-ch-2':    '/exercises/diamond-pushup.jpg',
@@ -21,55 +21,55 @@ export const EXERCISE_IMAGES: Record<string, string> = {
   'fb-push-3':  '/exercises/dips.gif',
 
   // Squats
-  'fb-legs-1':  'https://wger.de/media/exercise-images/1963/db285682-1ab3-4be0-ae00-5117ecce1ee6.png',
-  'lg-q-1':     'https://wger.de/media/exercise-images/1963/db285682-1ab3-4be0-ae00-5117ecce1ee6.png',
-  'lg-q-2':     'https://wger.de/media/exercise-images/1963/db285682-1ab3-4be0-ae00-5117ecce1ee6.png',
-  'lg-q-3':     'https://wger.de/media/exercise-images/1963/db285682-1ab3-4be0-ae00-5117ecce1ee6.png',
-  'qk-2':       'https://wger.de/media/exercise-images/1963/db285682-1ab3-4be0-ae00-5117ecce1ee6.png',
-  'hc-c-2':     'https://wger.de/media/exercise-images/1963/db285682-1ab3-4be0-ae00-5117ecce1ee6.png',
-  'lp-e-1':     'https://wger.de/media/exercise-images/1963/db285682-1ab3-4be0-ae00-5117ecce1ee6.png',
-  'lp-q-3':     'https://wger.de/media/exercise-images/1963/db285682-1ab3-4be0-ae00-5117ecce1ee6.png',
-  'lp-q-1':     'https://wger.de/media/exercise-images/1963/db285682-1ab3-4be0-ae00-5117ecce1ee6.png',
+  'fb-legs-1':  '/exercises/squat.gif',
+  'lg-q-1':     '/exercises/squat.gif',
+  'lg-q-2':     '/exercises/squat.gif',
+  'lg-q-3':     '/exercises/squat.gif',
+  'qk-2':       '/exercises/squat.gif',
+  'hc-c-2':     '/exercises/squat.gif',
+  'lp-e-1':     '/exercises/squat.gif',
+  'lp-q-3':     '/exercises/squat.gif',
+  'lp-q-1':     '/exercises/squat.gif',
+
+  // Bulgarian split squat
+  'lp-q-2':     '/exercises/bulgarian-split-squat.gif',
+
+  // Lunges
+  'fb-legs-2':  '/exercises/lunge.gif',
+  'lg-bn-1':    '/exercises/lunge.gif',
+  'lg-e-1':     '/exercises/lunge.gif',
+  'lp-bu-2':    '/exercises/lunge.gif',
+  'lp-e-3':     '/exercises/lunge.gif',
+
+  // Glute Bridge
+  'fb-legs-3':  '/exercises/glute-bridge.gif',
+  'lg-h-2':     '/exercises/glute-bridge.gif',
+  'lg-h-3':     '/exercises/glute-bridge.gif',
+  'lp-g-1':     '/exercises/glute-bridge.gif',
 
   // Wall sit
   'lg-bn-3':    '/exercises/wall-sit.svg',
 
-  // Bulgarian split squat
-  'lp-q-2':     'https://wger.de/media/exercise-images/988/6283b258-a4d7-4833-84f7-a38987022d3d.png',
-
-  // Lunges
-  'fb-legs-2':  'https://wger.de/media/exercise-images/984/5c7ffe68-e7b2-47f3-a22a-f9cc28640432.png',
-  'lg-bn-1':    'https://wger.de/media/exercise-images/984/5c7ffe68-e7b2-47f3-a22a-f9cc28640432.png',
-  'lg-e-1':     'https://wger.de/media/exercise-images/984/5c7ffe68-e7b2-47f3-a22a-f9cc28640432.png',
-  'lp-bu-2':    'https://wger.de/media/exercise-images/984/5c7ffe68-e7b2-47f3-a22a-f9cc28640432.png',
-  'lp-e-3':     'https://wger.de/media/exercise-images/984/5c7ffe68-e7b2-47f3-a22a-f9cc28640432.png',
-
-  // Glute Bridge
-  'fb-legs-3':  'https://wger.de/media/exercise-images/978/d3ffe51f-7eb8-4cc9-9eae-105847af3005.png',
-  'lg-h-2':     'https://wger.de/media/exercise-images/978/d3ffe51f-7eb8-4cc9-9eae-105847af3005.png',
-  'lg-h-3':     'https://wger.de/media/exercise-images/978/d3ffe51f-7eb8-4cc9-9eae-105847af3005.png',
-  'lp-g-1':     'https://wger.de/media/exercise-images/978/d3ffe51f-7eb8-4cc9-9eae-105847af3005.png',
-
   // Plank
-  'fb-core-1':  'https://wger.de/media/exercise-images/458/b7bd9c28-9f1d-4647-bd17-ab6a3adf5770.png',
-  'cr-f-1':     'https://wger.de/media/exercise-images/458/b7bd9c28-9f1d-4647-bd17-ab6a3adf5770.png',
-  'pb-co-1':    'https://wger.de/media/exercise-images/458/b7bd9c28-9f1d-4647-bd17-ab6a3adf5770.png',
-  'cr-bn-1':    'https://wger.de/media/exercise-images/1091/50c8912d-54ef-46c9-99d1-633b6196aa1e.jpg',
-  'hc-c-5':     'https://wger.de/media/exercise-images/1091/50c8912d-54ef-46c9-99d1-633b6196aa1e.jpg',
+  'fb-core-1':  '/exercises/plank.jpg',
+  'cr-f-1':     '/exercises/plank.jpg',
+  'pb-co-1':    '/exercises/plank.jpg',
+  'cr-bn-1':    '/exercises/plank.jpg',
+  'hc-c-5':     '/exercises/plank.jpg',
 
   // Side plank
   'cr-s-1':     '/exercises/side-plank.jpg',
   'cr-s-2':     '/exercises/side-plank.jpg',
 
   // Sit-ups
-  'fb-core-3':  'https://wger.de/media/exercise-images/1479/0305d98e-0887-4c0c-8992-7c220814efc2.webp',
-  'cr-f-2':     'https://wger.de/media/exercise-images/1479/0305d98e-0887-4c0c-8992-7c220814efc2.webp',
+  'fb-core-3':  '/exercises/situp.gif',
+  'cr-f-2':     '/exercises/situp.gif',
 
   // Bicycle crunches
   'cr-s-3':     '/exercises/bicycle-crunch.jpg',
 
   // Leg raises
-  'cr-f-3':     'https://wger.de/media/exercise-images/125/Leg-raises-2.png',
+  'cr-f-3':     '/exercises/leg-raise.gif',
 
   // Dead bug
   'cr-d-1':     '/exercises/dead-bug.jpg',
@@ -85,57 +85,57 @@ export const EXERCISE_IMAGES: Record<string, string> = {
   'ub-bn-2':    '/exercises/burpee.gif',
 
   // Jumping Jacks
-  'fb-burn-1':  'https://wger.de/media/exercise-images/320/6c9124b6-3551-47a8-9c22-20141c8b9c53.png',
-  'qk-1':       'https://wger.de/media/exercise-images/320/6c9124b6-3551-47a8-9c22-20141c8b9c53.png',
-  'hc-wu-2':    'https://wger.de/media/exercise-images/320/6c9124b6-3551-47a8-9c22-20141c8b9c53.png',
-  'lg-e-2':     'https://wger.de/media/exercise-images/320/6c9124b6-3551-47a8-9c22-20141c8b9c53.png',
-  'lg-e-3':     'https://wger.de/media/exercise-images/320/6c9124b6-3551-47a8-9c22-20141c8b9c53.png',
-  'lp-e-2':     'https://wger.de/media/exercise-images/320/6c9124b6-3551-47a8-9c22-20141c8b9c53.png',
+  'fb-burn-1':  '/exercises/jumping-jacks.gif',
+  'qk-1':       '/exercises/jumping-jacks.gif',
+  'hc-wu-2':    '/exercises/jumping-jacks.gif',
+  'lg-e-2':     '/exercises/jumping-jacks.gif',
+  'lg-e-3':     '/exercises/jumping-jacks.gif',
+  'lp-e-2':     '/exercises/jumping-jacks.gif',
 
   // High Knees
-  'fb-burn-2':  'https://wger.de/media/exercise-images/983/16245344-9957-4a24-8d61-f9939ed5f964.png',
-  'cr-bn-2':    'https://wger.de/media/exercise-images/983/16245344-9957-4a24-8d61-f9939ed5f964.png',
-  'qk-5':       'https://wger.de/media/exercise-images/983/16245344-9957-4a24-8d61-f9939ed5f964.png',
-  'hc-c-4':     'https://wger.de/media/exercise-images/983/16245344-9957-4a24-8d61-f9939ed5f964.png',
+  'fb-burn-2':  '/exercises/high-knees.gif',
+  'cr-bn-2':    '/exercises/high-knees.gif',
+  'qk-5':       '/exercises/high-knees.gif',
+  'hc-c-4':     '/exercises/high-knees.gif',
 
   // Romanian Deadlift
-  'lg-h-1':     'https://wger.de/media/exercise-images/1652/0306c8c0-70cc-45d4-92de-6fa72ceaa834.webp',
+  'lg-h-1':     '/exercises/romanian-deadlift.gif',
 
   // Calf Raises
-  'lg-bn-2':    'https://wger.de/media/exercise-images/622/9a429bd0-afd3-4ad0-8043-e9beec901c81.jpeg',
-  'lp-bu-1':    'https://wger.de/media/exercise-images/622/9a429bd0-afd3-4ad0-8043-e9beec901c81.jpeg',
+  'lg-bn-2':    '/exercises/calf-raise.gif',
+  'lp-bu-1':    '/exercises/calf-raise.gif',
 
   // Arm circles
   'ub-sh-1':    '/exercises/arm-circle.jpg',
 
   // Lateral Raises
-  'ub-sh-3':    'https://wger.de/media/exercise-images/148/lateral-dumbbell-raises-large-2.png',
-  'sa-sh-2':    'https://wger.de/media/exercise-images/148/lateral-dumbbell-raises-large-2.png',
+  'ub-sh-3':    '/exercises/lateral-raise.jpg',
+  'sa-sh-2':    '/exercises/lateral-raise.jpg',
 
-  // Back / Superman
-  'ub-bk-1':    'https://wger.de/media/exercise-images/829/ad724e5c-b1ed-49e8-9279-a17545b0dd0b.png',
-  'ub-bk-2':    'https://wger.de/media/exercise-images/829/ad724e5c-b1ed-49e8-9279-a17545b0dd0b.png',
-  'pb-bk-1':    'https://wger.de/media/exercise-images/829/ad724e5c-b1ed-49e8-9279-a17545b0dd0b.png',
-  'pb-bk-3':    'https://wger.de/media/exercise-images/829/ad724e5c-b1ed-49e8-9279-a17545b0dd0b.png',
-  'pb-bk-2':    'https://wger.de/media/exercise-images/1348/a3769120-2445-49f2-97d3-afc1238bfc2a.webp',
+  // Superman / Back extensions
+  'ub-bk-1':    '/exercises/superman.gif',
+  'pb-bk-1':    '/exercises/superman.gif',
+  'ub-bk-2':    '/exercises/superman.gif',
+  'pb-bk-3':    '/exercises/superman.gif',
+  'pb-bk-2':    '/exercises/superman.gif',
 
   // Bird Dog
-  'cr-d-3':     'https://wger.de/media/exercise-images/1572/3d14e761-a73d-49da-8804-f3016a7573ff.png',
+  'cr-d-3':     '/exercises/bird-dog.gif',
 
   // Hip Circles / Mobility
-  'mb-w-2':     'https://wger.de/media/exercise-images/1862/93d993f8-1d8c-4e21-99c6-08b2fe424a17.png',
-  'mb-l-3':     'https://wger.de/media/exercise-images/1867/767631e5-10d2-46b8-b03f-cc298f96963b.png',
-  'mb-c-2':     'https://wger.de/media/exercise-images/1872/df982df1-512a-4eb9-acd9-68cc1c265df6.png',
+  'mb-w-2':     '/exercises/hip-circle.gif',
+  'mb-l-3':     '/exercises/hip-flexor-stretch.jpg',
+  'mb-c-2':     '/exercises/pigeon-pose.jpg',
 
   // Bicep / Curls
-  'pb-bi-1':    'https://wger.de/media/exercise-images/86/Bicep-hammer-curl-1.png',
-  'sa-bi-1':    'https://wger.de/media/exercise-images/1012/8270fdb8-28f1-4eff-b410-af8642085b3f.png',
-  'sa-bi-2':    'https://wger.de/media/exercise-images/1012/8270fdb8-28f1-4eff-b410-af8642085b3f.png',
-  'pb-bi-3':    'https://wger.de/media/exercise-images/1012/8270fdb8-28f1-4eff-b410-af8642085b3f.png',
+  'pb-bi-1':    '/exercises/hammer-curl.gif',
+  'sa-bi-1':    '/exercises/hammer-curl.gif',
+  'sa-bi-2':    '/exercises/hammer-curl.gif',
+  'pb-bi-3':    '/exercises/hammer-curl.gif',
 
   // Front Raises
-  'sa-sh-3':    'https://wger.de/media/exercise-images/256/b7def5bc-2352-499b-b9e5-fff741003831.png',
+  'sa-sh-3':    '/exercises/front-raise.jpg',
 
   // Donkey Kicks
-  'lp-g-2':     'https://wger.de/media/exercise-images/990/de20457c-914a-45c9-8cf9-0ad9739759a1.png',
+  'lp-g-2':     '/exercises/donkey-kick.gif',
 };
