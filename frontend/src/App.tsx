@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Home } from '@/pages/Home';
+import { AdminPage } from '@/pages/AdminPage';
+import { WorkoutBuilder } from '@/pages/WorkoutBuilder';
+import { ResetPage } from '@/pages/ResetPage';
 import { StartScreen } from '@/pages/StartScreen';
 import { TimerScreen } from '@/pages/TimerScreen';
 import { CompletionScreen } from '@/pages/CompletionScreen';
@@ -35,6 +38,9 @@ export default function App() {
             <Route path="/workout" element={<TimerScreen />} />
             <Route path="/complete" element={<CompletionScreen />} />
             <Route path="/settings" element={<SettingsScreen />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/builder" element={<WorkoutBuilder />} />
+            <Route path="/reset" element={<ResetPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthGate>

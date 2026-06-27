@@ -10,7 +10,7 @@ import { WORKOUT_PLANS } from '@/data/workouts';
 import { PulsLogo } from '@/components/PulsLogo';
 import { useT } from '@/i18n';
 import { useFavoritesStore } from '@/store/favorites';
-import type { WorkoutHistoryEntry, StreakData } from '@/types';
+import type { WorkoutHistoryEntry, StreakData, CustomPlan } from '@/types';
 
 const categoryFilterColors: Record<string, string> = {
   Kraft: 'bg-violet-600 text-white',
@@ -43,6 +43,7 @@ export function Home() {
   const [history, setHistory] = useState<WorkoutHistoryEntry[]>([]);
   const [streak, setStreak] = useState<StreakData | null>(null);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [customPlans, setCustomPlans] = useState<CustomPlan[]>([]);
 
   const categories = useMemo(() => {
     const seen = new Set<string>();
@@ -72,9 +73,11 @@ export function Home() {
     Promise.all([
       api.getHistory(),
       api.getStreak(),
-    ]).then(([h, s]) => {
+      api.getCustomPlans(),
+    ]).then(([h, s, cp]) => {
       setHistory(h);
       setStreak(s);
+      setCustomPlans(cp);
     }).catch(() => {}).finally(() => setHistoryLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -98,6 +101,17 @@ export function Home() {
 
           <div className="flex items-center gap-2">
             <span className="text-gray-400 text-sm hidden sm:block">{user?.displayName}</span>
+            {user?.username === 'elias' && (
+              <button
+                onClick={() => navigate('/admin')}
+                className="text-gray-500 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5"
+                title="Admin"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </button>
+            )}
             <button
               onClick={() => navigate('/settings')}
               className="text-gray-500 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5"
@@ -149,6 +163,45 @@ export function Home() {
             </div>
           </section>
         )}
+
+        {/* Custom plans */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-white font-semibold text-lg">My Workouts</h2>
+            <button onClick={() => navigate('/builder')}
+              className="flex items-center gap-1.5 text-violet-400 hover:text-violet-300 text-sm font-medium transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Create
+            </button>
+          </div>
+          {customPlans.length === 0 ? (
+            <button onClick={() => navigate('/builder')}
+              className="w-full border-2 border-dashed border-white/10 rounded-2xl py-8 flex flex-col items-center gap-2 text-gray-600 hover:border-violet-500/40 hover:text-violet-400 transition-colors">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="text-sm">Create your first workout</span>
+            </button>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {customPlans.map(plan => (
+                <div key={plan.id}
+                  className="bg-white/5 hover:bg-white/8 border border-white/10 rounded-2xl p-4 flex flex-col gap-2 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/builder?edit=${plan.id}`)}>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-white font-semibold text-sm leading-snug">{plan.name}</span>
+                    <span className="text-gray-500 text-xs shrink-0">{plan.sections.length} block{plan.sections.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  <span className="text-gray-500 text-xs">
+                    {plan.sections.reduce((sum, s) => sum + s.exercises.length, 0)} exercises
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* Workout Grid */}
         <section>

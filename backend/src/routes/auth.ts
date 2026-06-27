@@ -223,6 +223,107 @@ router.post('/login/finish', async (req: Request, res: Response): Promise<void> 
   res.json({ verified: true, user: { id: user.id, username: user.username, displayName: user.displayName } });
 });
 
+// Validate a passkey reset token
+router.get('/reset/:token', async (req: Request, res: Response): Promise<void> => {
+  const record = await prisma.passkeyResetToken.findUnique({
+    where: { token: req.params.token },
+    include: { user: true },
+  });
+  if (!record || record.usedAt || record.expiresAt < new Date()) {
+    res.status(400).json({ error: 'Invalid or expired token' });
+    return;
+  }
+  res.json({ username: record.user.username, displayName: record.user.displayName });
+});
+
+// Start passkey registration via reset token
+router.post('/reset/:token/start', async (req: Request, res: Response): Promise<void> => {
+  const record = await prisma.passkeyResetToken.findUnique({
+    where: { token: req.params.token },
+    include: { user: { include: { credentials: true } } },
+  });
+  if (!record || record.usedAt || record.expiresAt < new Date()) {
+    res.status(400).json({ error: 'Invalid or expired token' });
+    return;
+  }
+
+  const user = record.user;
+  const options = await generateRegistrationOptions({
+    rpName: RP_NAME,
+    rpID: RPID,
+    userID: new TextEncoder().encode(user.id),
+    userName: user.username,
+    userDisplayName: user.displayName,
+    attestationType: 'none',
+    authenticatorSelection: { residentKey: 'preferred', userVerification: 'preferred' },
+    excludeCredentials: user.credentials.map(c => ({ id: c.credentialId })),
+  });
+
+  const s = sess(req);
+  s['challenge'] = options.challenge;
+  s['resetUserId'] = user.id;
+  s['resetToken'] = req.params.token;
+  await new Promise<void>((resolve, reject) => req.session.save((e) => (e ? reject(e) : resolve())));
+
+  res.json(options);
+});
+
+// Finish passkey registration via reset token
+router.post('/reset/:token/finish', async (req: Request, res: Response): Promise<void> => {
+  const s = sess(req);
+  const challenge = s['challenge'] as string | undefined;
+  const resetUserId = s['resetUserId'] as string | undefined;
+  const resetToken = s['resetToken'] as string | undefined;
+
+  if (!challenge || !resetUserId || resetToken !== req.params.token) {
+    res.status(400).json({ error: 'Session expired' });
+    return;
+  }
+
+  const record = await prisma.passkeyResetToken.findUnique({ where: { token: req.params.token } });
+  if (!record || record.usedAt || record.expiresAt < new Date()) {
+    res.status(400).json({ error: 'Token already used or expired' });
+    return;
+  }
+
+  const body: RegistrationResponseJSON = req.body;
+  const verification = await verifyRegistrationResponse({
+    response: body,
+    expectedChallenge: challenge,
+    expectedOrigin: ORIGIN,
+    expectedRPID: RPID,
+  });
+
+  if (!verification.verified || !verification.registrationInfo) {
+    res.status(400).json({ error: 'Verification failed' });
+    return;
+  }
+
+  const { registrationInfo } = verification;
+  await prisma.credential.create({
+    data: {
+      userId: resetUserId,
+      credentialId: registrationInfo.credentialID,
+      publicKey: Buffer.from(registrationInfo.credentialPublicKey),
+      counter: registrationInfo.counter,
+      deviceType: registrationInfo.credentialDeviceType,
+      backedUp: registrationInfo.credentialBackedUp,
+      transports: body.response.transports ?? [],
+    },
+  });
+
+  await prisma.passkeyResetToken.update({ where: { id: record.id }, data: { usedAt: new Date() } });
+
+  delete s['challenge'];
+  delete s['resetUserId'];
+  delete s['resetToken'];
+  s['userId'] = resetUserId;
+  await new Promise<void>((resolve, reject) => req.session.save((e) => (e ? reject(e) : resolve())));
+
+  const user = await prisma.user.findUnique({ where: { id: resetUserId } });
+  res.json({ verified: true, user: { id: user!.id, username: user!.username, displayName: user!.displayName } });
+});
+
 router.post('/logout', (req: Request, res: Response): void => {
   req.session.destroy((err) => {
     if (err) {

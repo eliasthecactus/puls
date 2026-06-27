@@ -7,10 +7,14 @@ import rateLimit from 'express-rate-limit';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import { prisma } from './lib/prisma';
+import path from 'path';
 import authRouter from './routes/auth';
 import workoutsRouter from './routes/workouts';
 import historyRouter from './routes/history';
 import userRouter from './routes/user';
+import exercisesRouter from './routes/exercises';
+import customPlansRouter from './routes/customPlans';
+import adminRouter from './routes/admin';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -73,10 +77,16 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+const UPLOADS_DIR = process.env.UPLOADS_DIR || '/app/uploads';
+app.use('/api/uploads', express.static(UPLOADS_DIR));
+
 app.use('/api/auth', authRouter);
 app.use('/api/workouts', workoutsRouter);
 app.use('/api/history', historyRouter);
 app.use('/api/user', userRouter);
+app.use('/api/exercises', exercisesRouter);
+app.use('/api/custom-plans', customPlansRouter);
+app.use('/api/admin', adminRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' });

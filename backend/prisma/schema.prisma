@@ -8,14 +8,17 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  username    String   @unique
-  displayName String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String    @id @default(uuid())
+  username     String    @unique
+  displayName  String
+  lastActiveAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  credentials Credential[]
-  history     WorkoutHistory[]
+  credentials        Credential[]
+  history            WorkoutHistory[]
+  customPlans        CustomPlan[]
+  passkeyResetTokens PasskeyResetToken[]
 
   @@map("users")
 }
@@ -49,6 +52,50 @@ model WorkoutHistory {
 
   @@index([userId, completedAt])
   @@map("workout_history")
+}
+
+model Exercise {
+  id               String   @id @default(uuid())
+  nameDE           String
+  nameEN           String
+  detailDE         String   @default("")
+  detailEN         String   @default("")
+  formTipDE        String?
+  formTipEN        String?
+  imageUrl         String?
+  primaryMuscles   String[]
+  secondaryMuscles String[]
+  duration         Int      @default(30)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("exercises")
+}
+
+model CustomPlan {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  sections  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("custom_plans")
+}
+
+model PasskeyResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  token     String    @unique @default(uuid())
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("passkey_reset_tokens")
 }
 
 model Session {

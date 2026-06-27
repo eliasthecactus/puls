@@ -16,6 +16,13 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
   }
 
   req.user = user;
+
+  // Update lastActiveAt at most once per hour
+  const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  if (!user.lastActiveAt || user.lastActiveAt < hourAgo) {
+    prisma.user.update({ where: { id: user.id }, data: { lastActiveAt: new Date() } }).catch(() => {});
+  }
+
   next();
 }
 

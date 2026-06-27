@@ -89,3 +89,52 @@ export interface StreakData {
   streak: number;
   totalWorkouts: number;
 }
+
+// Exercise stored in DB (used for custom plans + admin management)
+export interface DbExercise {
+  id: string;
+  nameDE: string;
+  nameEN: string;
+  detailDE: string;
+  detailEN: string;
+  formTipDE?: string;
+  formTipEN?: string;
+  imageUrl?: string;
+  primaryMuscles: string[];
+  secondaryMuscles: string[];
+  duration: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomPlanExercise {
+  exerciseId: string;
+  duration: number;
+}
+
+export interface CustomPlanSection {
+  id: string;
+  label: string;
+  rounds: number;
+  restBetweenRounds: number;
+  exercises: CustomPlanExercise[];
+}
+
+export interface CustomPlan {
+  id: string;
+  userId: string;
+  name: string;
+  sections: CustomPlanSection[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUser {
+  id: string;
+  username: string;
+  displayName: string;
+  lastActiveAt: string | null;
+  createdAt: string;
+  credentialCount: number;
+  workoutCount: number;
+}

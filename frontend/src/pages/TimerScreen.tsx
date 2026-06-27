@@ -58,8 +58,11 @@ export function TimerScreen() {
   } = engine;
 
   useEffect(() => {
-    if (phase === 'complete') navigate('/complete', { replace: true });
-  }, [phase, navigate]);
+    if (phase === 'complete') {
+      sessionStorage.setItem('puls_elapsed', String(engine.totalElapsed));
+      navigate('/complete', { replace: true });
+    }
+  }, [phase, navigate, engine.totalElapsed]);
 
   if (phase === 'complete') return null;
 
