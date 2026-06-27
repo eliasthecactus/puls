@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
-import type { DbExercise, AdminUser } from '@/types';
+import type { DbExercise, AdminUser, SystemPlan } from '@/types';
 import { useAuthStore } from '@/store/auth';
 
-type Tab = 'exercises' | 'users';
+type Tab = 'exercises' | 'trainings' | 'users';
 
 function BackButton({ onClick }: { onClick: () => void }) {
   return (
@@ -303,6 +303,158 @@ function UsersTab() {
   );
 }
 
+// ── System Plans Tab ─────────────────────────────────────────────────────────
+
+function SystemPlanRow({ plan, onEdit, onDelete }: { plan: SystemPlan; onEdit: () => void; onDelete: () => void }) {
+  const nameDE = (plan.name as any)?.de ?? '';
+  const nameEN = (plan.name as any)?.en ?? '';
+  return (
+    <div className="flex items-center gap-3 bg-white/5 rounded-xl px-3 py-3">
+      <div className="flex-1 min-w-0">
+        <p className="text-white text-sm font-medium truncate">{nameDE} / {nameEN}</p>
+        <p className="text-gray-500 text-xs">{plan.category} · {plan.duration} min · {(plan.sections as any[]).length} blocks</p>
+      </div>
+      <button onClick={onEdit} className="w-8 h-8 bg-white/5 hover:bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.172-8.172z" />
+        </svg>
+      </button>
+      <button onClick={onDelete} className="w-8 h-8 bg-red-500/10 hover:bg-red-500/20 rounded-lg flex items-center justify-center text-red-400 transition-colors">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+function SystemPlanModal({ plan, onSave, onClose }: { plan: SystemPlan; onSave: (p: SystemPlan) => void; onClose: () => void }) {
+  const [form, setForm] = useState({
+    nameDE: (plan.name as any)?.de ?? '',
+    nameEN: (plan.name as any)?.en ?? '',
+    subtitleDE: (plan.subtitle as any)?.de ?? '',
+    subtitleEN: (plan.subtitle as any)?.en ?? '',
+    category: plan.category,
+    duration: plan.duration,
+    icon: plan.icon,
+    sortOrder: plan.sortOrder,
+  });
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    try {
+      const updated = await api.updateSystemPlan(plan.id, {
+        name: { de: form.nameDE, en: form.nameEN },
+        subtitle: { de: form.subtitleDE, en: form.subtitleEN },
+        category: form.category,
+        duration: form.duration,
+        icon: form.icon,
+        sortOrder: form.sortOrder,
+      });
+      onSave(updated);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center animate-fade-in">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
+      <div className="relative w-full max-w-lg bg-gray-900 border border-white/10 rounded-t-3xl px-4 pt-5 pb-8 flex flex-col gap-4 animate-slide-up max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-white font-bold text-lg">Edit Training</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-white">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <label className="flex flex-col gap-1">
+            <span className="text-gray-500 text-xs">Name DE</span>
+            <input className="input" value={form.nameDE} onChange={e => setForm(f => ({ ...f, nameDE: e.target.value }))} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-gray-500 text-xs">Name EN</span>
+            <input className="input" value={form.nameEN} onChange={e => setForm(f => ({ ...f, nameEN: e.target.value }))} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-gray-500 text-xs">Subtitle DE</span>
+            <input className="input" value={form.subtitleDE} onChange={e => setForm(f => ({ ...f, subtitleDE: e.target.value }))} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-gray-500 text-xs">Subtitle EN</span>
+            <input className="input" value={form.subtitleEN} onChange={e => setForm(f => ({ ...f, subtitleEN: e.target.value }))} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-gray-500 text-xs">Category</span>
+            <input className="input" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-gray-500 text-xs">Duration (min)</span>
+            <input type="number" className="input" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: parseInt(e.target.value) || 1 }))} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-gray-500 text-xs">Icon</span>
+            <input className="input" value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-gray-500 text-xs">Sort Order</span>
+            <input type="number" className="input" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: parseInt(e.target.value) || 0 }))} />
+          </label>
+        </div>
+
+        <div className="flex gap-2 mt-2">
+          <button onClick={onClose} className="btn-secondary flex-1">Cancel</button>
+          <button onClick={save} disabled={saving} className="btn-primary flex-1">{saving ? 'Saving…' : 'Save'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SystemPlansTab() {
+  const [plans, setPlans] = useState<SystemPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<SystemPlan | null>(null);
+
+  useEffect(() => {
+    api.getSystemPlans().then(setPlans).finally(() => setLoading(false));
+  }, []);
+
+  async function deletePlan(id: string) {
+    if (!confirm('Delete this training plan?')) return;
+    await api.deleteSystemPlan(id);
+    setPlans(prev => prev.filter(p => p.id !== id));
+  }
+
+  if (loading) return <p className="text-gray-500 text-center py-12">Loading…</p>;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {plans.map(plan => (
+        <SystemPlanRow
+          key={plan.id}
+          plan={plan}
+          onEdit={() => setEditing(plan)}
+          onDelete={() => deletePlan(plan.id)}
+        />
+      ))}
+      {plans.length === 0 && <p className="text-gray-500 text-center py-8">No system plans found.</p>}
+
+      {editing && (
+        <SystemPlanModal
+          plan={editing}
+          onSave={updated => { setPlans(prev => prev.map(p => p.id === updated.id ? updated : p)); setEditing(null); }}
+          onClose={() => setEditing(null)}
+        />
+      )}
+    </div>
+  );
+}
+
 // ── Main page ───────────────────────────────────────────────────────────────
 
 export function AdminPage() {
@@ -327,7 +479,7 @@ export function AdminPage() {
           <h1 className="text-white font-bold text-lg">Admin</h1>
         </div>
         <div className="flex gap-1 bg-white/5 rounded-xl p-1">
-          {(['exercises', 'users'] as Tab[]).map(t => (
+          {(['exercises', 'trainings', 'users'] as Tab[]).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors capitalize ${tab === t ? 'bg-violet-600 text-white' : 'text-gray-400 hover:text-white'}`}>
               {t}
@@ -336,7 +488,9 @@ export function AdminPage() {
         </div>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-4">
-        {tab === 'exercises' ? <ExercisesTab /> : <UsersTab />}
+        {tab === 'exercises' && <ExercisesTab />}
+        {tab === 'trainings' && <SystemPlansTab />}
+        {tab === 'users' && <UsersTab />}
       </div>
     </div>
   );

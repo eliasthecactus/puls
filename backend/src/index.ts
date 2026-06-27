@@ -15,6 +15,8 @@ import userRouter from './routes/user';
 import exercisesRouter from './routes/exercises';
 import customPlansRouter from './routes/customPlans';
 import adminRouter from './routes/admin';
+import systemPlansRouter from './routes/systemPlans';
+import { autoSeed } from './startup';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -86,6 +88,7 @@ app.use('/api/history', historyRouter);
 app.use('/api/user', userRouter);
 app.use('/api/exercises', exercisesRouter);
 app.use('/api/custom-plans', customPlansRouter);
+app.use('/api/system-plans', systemPlansRouter);
 app.use('/api/admin', adminRouter);
 
 app.use((_req, res) => {
@@ -97,8 +100,9 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   res.status(500).json({ error: isProduction ? 'Internal server error' : err.message });
 });
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`PULS backend running on port ${PORT}`);
+  await autoSeed(prisma).catch(e => console.error('[seed] failed:', e));
 });
 
 async function shutdown() {

@@ -44,6 +44,7 @@ export function TimerScreen() {
     isPaused,
     currentExercise,
     currentSection,
+    nextSection,
     timeRemaining,
     restTimeRemaining,
     progressPercent,
@@ -238,6 +239,16 @@ export function TimerScreen() {
           seconds={restTimeRemaining}
           onSkip={skipRest}
           nextExerciseName={currentSection?.exercises[0] ? ls(currentSection.exercises[0].name) : undefined}
+        />
+      )}
+
+      {phase === 'section-rest' && (
+        <RestOverlay
+          seconds={restTimeRemaining}
+          onSkip={skipRest}
+          label="Next Block"
+          nextLabel="Block"
+          nextExerciseName={nextSection ? ls(nextSection.label) : undefined}
         />
       )}
 

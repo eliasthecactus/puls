@@ -14,6 +14,7 @@ export interface WorkoutEngineState {
   isPaused: boolean;
   currentExercise: Exercise | null;
   currentSection: Section | null;
+  nextSection: Section | null;
   progressPercent: number;
   totalSections: number;
   roundsForCurrentSection: number;
@@ -67,6 +68,7 @@ export function useWorkoutEngine(plan: WorkoutPlan, intensity: WorkoutIntensity)
 
   const currentSection = plan.sections[sectionIdx] ?? null;
   const currentExercise = currentSection?.exercises[exerciseIdx] ?? null;
+  const nextSection = plan.sections[sectionIdx + 1] ?? null;
   const roundsForCurrentSection = currentSection ? getRoundsForSection(currentSection, intensity) : 1;
 
   // Progress: count total exercise+rest slots across all sections
@@ -116,6 +118,18 @@ export function useWorkoutEngine(plan: WorkoutPlan, intensity: WorkoutIntensity)
     [plan],
   );
 
+  const goToSectionRest = useCallback(
+    (fromSectionIdx: number) => {
+      const sec = plan.sections[fromSectionIdx];
+      if (!sec) return;
+      const restTime = sec.restAfterSection ?? 0;
+      setRestTimeRemaining(restTime);
+      setPhase('section-rest');
+      setSectionIdx(fromSectionIdx);
+    },
+    [plan],
+  );
+
   const advance = useCallback(() => {
     const s = stateRef.current;
     const sec = plan.sections[s.sectionIdx];
@@ -129,22 +143,25 @@ export function useWorkoutEngine(plan: WorkoutPlan, intensity: WorkoutIntensity)
       return;
     }
 
-    // End of round
+    // End of round — more rounds remaining
     if (s.roundIdx < rounds - 1) {
-      // More rounds: go to rest if rest time > 0
       if (sec.restBetweenRounds > 0) {
         goToRest(s.sectionIdx, s.roundIdx + 1);
-        playBeep('transition');
       } else {
         goToExercise(s.sectionIdx, s.roundIdx + 1, 0);
-        playBeep('transition');
       }
+      playBeep('transition');
       return;
     }
 
-    // End of section
+    // End of last round in section
     if (s.sectionIdx < plan.sections.length - 1) {
-      goToExercise(s.sectionIdx + 1, 0, 0);
+      const restAfter = sec.restAfterSection ?? 0;
+      if (restAfter > 0) {
+        goToSectionRest(s.sectionIdx);
+      } else {
+        goToExercise(s.sectionIdx + 1, 0, 0);
+      }
       playBeep('transition');
       return;
     }
@@ -153,11 +170,16 @@ export function useWorkoutEngine(plan: WorkoutPlan, intensity: WorkoutIntensity)
     setPhase('complete');
     setIsRunning(false);
     playBeep('complete');
-  }, [plan, intensity, goToExercise, goToRest, playBeep]);
+  }, [plan, intensity, goToExercise, goToRest, goToSectionRest, playBeep]);
 
   const advanceFromRest = useCallback(() => {
     const s = stateRef.current;
-    goToExercise(s.sectionIdx, s.roundIdx, 0);
+    if (s.phase === 'section-rest') {
+      // After section rest, go to first exercise of next section
+      goToExercise(s.sectionIdx + 1, 0, 0);
+    } else {
+      goToExercise(s.sectionIdx, s.roundIdx, 0);
+    }
     playBeep('transition');
   }, [goToExercise, playBeep]);
 
@@ -176,7 +198,7 @@ export function useWorkoutEngine(plan: WorkoutPlan, intensity: WorkoutIntensity)
 
       setTotalElapsed((e) => e + 0.1);
 
-      if (s.phase === 'rest') {
+      if (s.phase === 'rest' || s.phase === 'section-rest') {
         setRestTimeRemaining((t) => {
           const next = Math.max(0, t - 0.1);
           if (next <= 0) advanceFromRest();
@@ -228,6 +250,11 @@ export function useWorkoutEngine(plan: WorkoutPlan, intensity: WorkoutIntensity)
 
   const prev = useCallback(() => {
     const s = stateRef.current;
+    if (s.phase === 'rest' || s.phase === 'section-rest') {
+      // Skip back to start of current section
+      goToExercise(s.sectionIdx, 0, 0);
+      return;
+    }
     if (s.exerciseIdx > 0) {
       goToExercise(s.sectionIdx, s.roundIdx, s.exerciseIdx - 1);
     } else if (s.roundIdx > 0) {
@@ -275,6 +302,7 @@ export function useWorkoutEngine(plan: WorkoutPlan, intensity: WorkoutIntensity)
     isPaused,
     currentExercise,
     currentSection,
+    nextSection,
     progressPercent,
     totalSections: plan.sections.length,
     roundsForCurrentSection,

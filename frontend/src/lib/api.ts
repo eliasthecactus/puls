@@ -93,6 +93,12 @@ export const api = {
   generateResetToken: (userId: string) =>
     request<{ token: string; url: string; expiresAt: string }>(`/admin/users/${userId}/reset-token`, { method: 'POST' }),
 
+  // System plans (public read, admin write)
+  getSystemPlans: () => request<import('@/types').SystemPlan[]>('/system-plans'),
+  updateSystemPlan: (id: string, data: Partial<import('@/types').SystemPlan>) =>
+    request<import('@/types').SystemPlan>(`/system-plans/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteSystemPlan: (id: string) => request<void>(`/system-plans/${id}`, { method: 'DELETE' }),
+
   // Passkey reset
   validateResetToken: (token: string) => request<{ username: string; displayName: string }>(`/auth/reset/${token}`),
   startPasskeyReset: (token: string) =>

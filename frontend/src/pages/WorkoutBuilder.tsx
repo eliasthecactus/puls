@@ -111,7 +111,7 @@ function SectionEditor({ section, exercises, onChange, onDelete }: {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <label className="flex flex-col gap-1">
           <span className="text-gray-500 text-xs">Rounds</span>
           <input type="number" min={1} max={20} className="input"
@@ -119,10 +119,16 @@ function SectionEditor({ section, exercises, onChange, onDelete }: {
             onChange={e => onChange({ ...section, rounds: parseInt(e.target.value) || 1 })} />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-gray-500 text-xs">Rest between rounds (s)</span>
+          <span className="text-gray-500 text-xs">Rest rounds (s)</span>
           <input type="number" min={0} max={300} className="input"
             value={section.restBetweenRounds}
             onChange={e => onChange({ ...section, restBetweenRounds: parseInt(e.target.value) || 0 })} />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-gray-500 text-xs">Rest after block (s)</span>
+          <input type="number" min={0} max={300} className="input"
+            value={section.restAfterSection}
+            onChange={e => onChange({ ...section, restAfterSection: parseInt(e.target.value) || 0 })} />
         </label>
       </div>
 
@@ -187,6 +193,7 @@ export function WorkoutBuilder() {
       label: `Block ${prev.length + 1}`,
       rounds: 3,
       restBetweenRounds: 60,
+      restAfterSection: 90,
       exercises: [],
     }]);
   }

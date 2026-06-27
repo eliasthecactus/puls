@@ -50,6 +50,7 @@ export interface Section {
   label: LocalizedString;
   rounds: number;
   restBetweenRounds: number;
+  restAfterSection?: number;
   exercises: Exercise[];
 }
 
@@ -67,7 +68,7 @@ export interface WorkoutPlan {
   sections: Section[];
 }
 
-export type WorkoutPhase = 'exercise' | 'rest' | 'complete';
+export type WorkoutPhase = 'exercise' | 'rest' | 'section-rest' | 'complete';
 export type WorkoutIntensity = 'normal' | 'intense';
 
 export interface WorkoutHistoryEntry {
@@ -117,6 +118,7 @@ export interface CustomPlanSection {
   label: string;
   rounds: number;
   restBetweenRounds: number;
+  restAfterSection: number;
   exercises: CustomPlanExercise[];
 }
 
@@ -125,6 +127,22 @@ export interface CustomPlan {
   userId: string;
   name: string;
   sections: CustomPlanSection[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// System plan as stored in DB — sections JSON matches WorkoutPlan.sections structure
+export interface SystemPlan {
+  id: string;
+  planKey: string;
+  name: Record<string, string>;
+  subtitle: Record<string, string>;
+  category: string;
+  duration: number;
+  icon: string;
+  color: [string, string];
+  sections: any[];
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 }

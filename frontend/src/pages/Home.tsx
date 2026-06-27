@@ -10,7 +10,20 @@ import { WORKOUT_PLANS } from '@/data/workouts';
 import { PulsLogo } from '@/components/PulsLogo';
 import { useT } from '@/i18n';
 import { useFavoritesStore } from '@/store/favorites';
-import type { WorkoutHistoryEntry, StreakData, CustomPlan } from '@/types';
+import type { WorkoutHistoryEntry, StreakData, CustomPlan, WorkoutPlan, WorkoutIconType, SystemPlan } from '@/types';
+
+function systemPlanToWorkoutPlan(sp: SystemPlan): WorkoutPlan {
+  return {
+    id: sp.planKey,
+    name: sp.name as unknown as WorkoutPlan['name'],
+    subtitle: sp.subtitle as unknown as WorkoutPlan['subtitle'],
+    category: sp.category,
+    duration: sp.duration,
+    icon: sp.icon as WorkoutIconType,
+    color: sp.color,
+    sections: sp.sections as WorkoutPlan['sections'],
+  };
+}
 
 const categoryFilterColors: Record<string, string> = {
   Kraft: 'bg-violet-600 text-white',
@@ -61,10 +74,19 @@ export function Home() {
     [plans, favoriteIds]
   );
 
-  // Workout plans are static app content — always use bundled data
+  // Load system plans from API, fall back to bundled data
   useEffect(() => {
-    setPlans(WORKOUT_PLANS);
-    setPlansLoading(false);
+    setPlansLoading(true);
+    api.getSystemPlans()
+      .then(sps => {
+        if (sps.length > 0) {
+          setPlans(sps.map(systemPlanToWorkoutPlan));
+        } else {
+          setPlans(WORKOUT_PLANS);
+        }
+      })
+      .catch(() => setPlans(WORKOUT_PLANS))
+      .finally(() => setPlansLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch history & streak — user is always present (auth-gated)
