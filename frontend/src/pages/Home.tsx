@@ -8,29 +8,18 @@ import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { WORKOUT_PLANS } from '@/data/workouts';
 import { PulsLogo } from '@/components/PulsLogo';
-import { useT } from '@/i18n';
+import { useT, useLocalStr } from '@/i18n';
 import { useFavoritesStore } from '@/store/favorites';
-import type { WorkoutHistoryEntry, StreakData, CustomPlan, WorkoutPlan, WorkoutIconType, SystemPlan } from '@/types';
+import { systemPlanToWorkoutPlan, customPlanToWorkoutPlan, computeDurationMin } from '@/lib/training';
+import { categoryFilterClass } from '@/data/categories';
+import type { WorkoutHistoryEntry, StreakData, WorkoutPlan, DbExercise } from '@/types';
 
-function systemPlanToWorkoutPlan(sp: SystemPlan): WorkoutPlan {
-  return {
-    id: sp.planKey,
-    name: sp.name as unknown as WorkoutPlan['name'],
-    subtitle: sp.subtitle as unknown as WorkoutPlan['subtitle'],
-    category: sp.category,
-    duration: sp.duration,
-    icon: sp.icon as WorkoutIconType,
-    color: sp.color,
-    sections: sp.sections as WorkoutPlan['sections'],
-  };
+type DurationBucket = 'all' | 'short' | 'medium' | 'long';
+type SortMode = 'default' | 'name' | 'duration' | 'durationDesc';
+
+function planMinutes(p: WorkoutPlan): number {
+  return p.duration ?? computeDurationMin(p.sections);
 }
-
-const categoryFilterColors: Record<string, string> = {
-  Kraft: 'bg-violet-600 text-white',
-  Core: 'bg-emerald-600 text-white',
-  HIIT: 'bg-yellow-500 text-black',
-  Mobilität: 'bg-pink-600 text-white',
-};
 
 function WorkoutCardSkeleton() {
   return (
@@ -48,59 +37,77 @@ function WorkoutCardSkeleton() {
 export function Home() {
   const navigate = useNavigate();
   const t = useT();
+  const ls = useLocalStr();
   const { plans, plansLoading, plansError, setPlans, setPlansLoading, setPlansError, setSelectedPlan } = useWorkoutStore();
   const { user, setUser } = useAuthStore();
 
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const { favoriteIds } = useFavoritesStore();
   const [history, setHistory] = useState<WorkoutHistoryEntry[]>([]);
   const [streak, setStreak] = useState<StreakData | null>(null);
   const [historyLoading, setHistoryLoading] = useState(true);
-  const [customPlans, setCustomPlans] = useState<CustomPlan[]>([]);
+  const [customWorkouts, setCustomWorkouts] = useState<WorkoutPlan[]>([]);
+
+  // Filter / sort state
+  const [search, setSearch] = useState('');
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [durationBucket, setDurationBucket] = useState<DurationBucket>('all');
+  const [sortMode, setSortMode] = useState<SortMode>('default');
 
   const categories = useMemo(() => {
     const seen = new Set<string>();
-    plans.forEach(p => seen.add(p.category));
+    plans.forEach(p => p.category && seen.add(p.category));
     return Array.from(seen);
   }, [plans]);
 
-  const filteredPlans = useMemo(
-    () => activeFilter ? plans.filter(p => p.category === activeFilter) : plans,
-    [plans, activeFilter]
-  );
+  const filteredPlans = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let result = plans.filter(p => {
+      if (activeFilter && p.category !== activeFilter) return false;
+      if (favoritesOnly && !favoriteIds.includes(p.id)) return false;
+      if (q && !(ls(p.name).toLowerCase().includes(q) || ls(p.subtitle).toLowerCase().includes(q))) return false;
+      if (durationBucket !== 'all') {
+        const m = planMinutes(p);
+        if (durationBucket === 'short' && m > 15) return false;
+        if (durationBucket === 'medium' && (m <= 15 || m > 30)) return false;
+        if (durationBucket === 'long' && m <= 30) return false;
+      }
+      return true;
+    });
+    if (sortMode === 'name') result = [...result].sort((a, b) => ls(a.name).localeCompare(ls(b.name)));
+    else if (sortMode === 'duration') result = [...result].sort((a, b) => planMinutes(a) - planMinutes(b));
+    else if (sortMode === 'durationDesc') result = [...result].sort((a, b) => planMinutes(b) - planMinutes(a));
+    return result;
+  }, [plans, activeFilter, favoritesOnly, favoriteIds, search, durationBucket, sortMode, ls]);
 
   const favoritePlans = useMemo(
     () => plans.filter(p => favoriteIds.includes(p.id)),
     [plans, favoriteIds]
   );
 
-  // Load system plans from API, fall back to bundled data
+  const hasActiveFilters = !!search || !!activeFilter || favoritesOnly || durationBucket !== 'all' || sortMode !== 'default';
+
+  // Load everything: exercise pool resolves both system and custom trainings.
   useEffect(() => {
     setPlansLoading(true);
-    api.getSystemPlans()
-      .then(sps => {
-        if (sps.length > 0) {
-          setPlans(sps.map(systemPlanToWorkoutPlan));
-        } else {
-          setPlans(WORKOUT_PLANS);
-        }
-      })
-      .catch(() => setPlans(WORKOUT_PLANS))
-      .finally(() => setPlansLoading(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Fetch history & streak — user is always present (auth-gated)
-  useEffect(() => {
     setHistoryLoading(true);
     Promise.all([
+      api.getExercises(),
+      api.getSystemPlans(),
       api.getHistory(),
       api.getStreak(),
       api.getCustomPlans(),
-    ]).then(([h, s, cp]) => {
+    ]).then(([pool, sps, h, s, cps]: [DbExercise[], Awaited<ReturnType<typeof api.getSystemPlans>>, WorkoutHistoryEntry[], StreakData, Awaited<ReturnType<typeof api.getCustomPlans>>]) => {
+      setPlans(sps.length > 0 ? sps.map(sp => systemPlanToWorkoutPlan(sp, pool)) : WORKOUT_PLANS);
       setHistory(h);
       setStreak(s);
-      setCustomPlans(cp);
-    }).catch(() => {}).finally(() => setHistoryLoading(false));
+      setCustomWorkouts(cps.map(cp => customPlanToWorkoutPlan(cp, pool)));
+    }).catch(() => {
+      setPlans(WORKOUT_PLANS);
+    }).finally(() => {
+      setPlansLoading(false);
+      setHistoryLoading(false);
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleLogout() {
@@ -111,13 +118,27 @@ export function Home() {
   function retryPlans() {
     setPlansError(null);
     setPlansLoading(true);
-    api.getWorkouts().then(setPlans).catch((e) => setPlansError(e.message)).finally(() => setPlansLoading(false));
+    api.getSystemPlans()
+      .then(async sps => {
+        const pool = await api.getExercises();
+        setPlans(sps.length > 0 ? sps.map(sp => systemPlanToWorkoutPlan(sp, pool)) : WORKOUT_PLANS);
+      })
+      .catch((e) => setPlansError(e.message))
+      .finally(() => setPlansLoading(false));
+  }
+
+  function clearFilters() {
+    setSearch(''); setActiveFilter(null); setFavoritesOnly(false);
+    setDurationBucket('all'); setSortMode('default');
   }
 
   return (
     <div className="min-h-screen bg-gray-950 pb-safe">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-gray-950/80 backdrop-blur-xl border-b border-white/5 px-4 py-3">
+      <header
+        className="sticky top-0 z-10 bg-gray-950/80 backdrop-blur-xl border-b border-white/5 px-4 pb-3"
+        style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 0.75rem)' }}
+      >
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <PulsLogo size={28} />
 
@@ -198,7 +219,7 @@ export function Home() {
               Create
             </button>
           </div>
-          {customPlans.length === 0 ? (
+          {customWorkouts.length === 0 ? (
             <button onClick={() => navigate('/builder')}
               className="w-full border-2 border-dashed border-white/10 rounded-2xl py-8 flex flex-col items-center gap-2 text-gray-600 hover:border-violet-500/40 hover:text-violet-400 transition-colors">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,16 +229,24 @@ export function Home() {
             </button>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {customPlans.map(plan => (
+              {customWorkouts.map(plan => (
                 <div key={plan.id}
-                  className="bg-white/5 hover:bg-white/8 border border-white/10 rounded-2xl p-4 flex flex-col gap-2 transition-colors cursor-pointer"
-                  onClick={() => navigate(`/builder?edit=${plan.id}`)}>
+                  className="group bg-white/5 hover:bg-white/8 border border-white/10 rounded-2xl p-4 flex flex-col gap-2 transition-colors cursor-pointer"
+                  onClick={() => { setSelectedPlan(plan); navigate('/start'); }}>
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-white font-semibold text-sm leading-snug">{plan.name}</span>
-                    <span className="text-gray-500 text-xs shrink-0">{plan.sections.length} block{plan.sections.length !== 1 ? 's' : ''}</span>
+                    <span className="text-white font-semibold text-sm leading-snug">{ls(plan.name)}</span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigate(`/builder?edit=${plan.id}`); }}
+                      className="shrink-0 text-gray-500 hover:text-violet-400 transition-colors"
+                      aria-label="Edit workout"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.172-8.172z" />
+                      </svg>
+                    </button>
                   </div>
                   <span className="text-gray-500 text-xs">
-                    {plan.sections.reduce((sum, s) => sum + s.exercises.length, 0)} exercises
+                    {planMinutes(plan)} min · {plan.sections.length} block{plan.sections.length !== 1 ? 's' : ''} · {plan.sections.reduce((sum, s) => sum + s.exercises.length, 0)} exercises
                   </span>
                 </div>
               ))}
@@ -229,32 +258,96 @@ export function Home() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold text-lg">{t.workoutsSection}</h2>
-          </div>
-          {!plansLoading && categories.length > 0 && (
-            <div className="flex gap-2 flex-wrap mb-4">
-              <button
-                onClick={() => setActiveFilter(null)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  activeFilter === null
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                {t.filterAll}
+            {hasActiveFilters && (
+              <button onClick={clearFilters} className="text-gray-500 hover:text-white text-xs transition-colors">
+                {t.clearFilters}
               </button>
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveFilter(activeFilter === cat ? null : cat)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                    activeFilter === cat
-                      ? categoryFilterColors[cat] ?? 'bg-violet-600 text-white'
-                      : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-                  }`}
+            )}
+          </div>
+
+          {!plansLoading && (
+            <div className="flex flex-col gap-3 mb-4">
+              {/* Search + sort */}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    placeholder={t.searchPlaceholder}
+                    className="input pl-9"
+                  />
+                </div>
+                <select
+                  value={sortMode}
+                  onChange={e => setSortMode(e.target.value as SortMode)}
+                  className="input w-auto"
+                  aria-label={t.sortLabel}
                 >
-                  {t.categories[cat] ?? cat}
-                </button>
-              ))}
+                  <option value="default">{t.sortDefault}</option>
+                  <option value="name">{t.sortName}</option>
+                  <option value="duration">{t.sortDurationAsc}</option>
+                  <option value="durationDesc">{t.sortDurationDesc}</option>
+                </select>
+              </div>
+
+              {/* Category chips + favorites */}
+              {categories.length > 0 && (
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => setActiveFilter(null)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                      activeFilter === null ? 'bg-violet-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {t.filterAll}
+                  </button>
+                  {categories.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveFilter(activeFilter === cat ? null : cat)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                        activeFilter === cat ? categoryFilterClass(cat) : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      {t.categories[cat] ?? cat}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setFavoritesOnly(v => !v)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
+                      favoritesOnly ? 'bg-red-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    <svg className="w-3 h-3" fill={favoritesOnly ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    {t.favoritesSection}
+                  </button>
+                </div>
+              )}
+
+              {/* Duration buckets */}
+              <div className="flex gap-2 flex-wrap">
+                {([
+                  ['all', t.durationAll],
+                  ['short', t.durationShort],
+                  ['medium', t.durationMedium],
+                  ['long', t.durationLong],
+                ] as [DurationBucket, string][]).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => setDurationBucket(key)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                      durationBucket === key ? 'bg-violet-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {plansError ? (
@@ -264,6 +357,15 @@ export function Home() {
               <button onClick={retryPlans} className="text-violet-400 text-sm hover:text-violet-300">
                 {t.retry}
               </button>
+            </div>
+          ) : !plansLoading && filteredPlans.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-sm mb-3">{t.noResults}</p>
+              {hasActiveFilters && (
+                <button onClick={clearFilters} className="text-violet-400 text-sm hover:text-violet-300">
+                  {t.clearFilters}
+                </button>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

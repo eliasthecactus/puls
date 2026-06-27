@@ -7,8 +7,6 @@ export const WORKOUT_PLANS: WorkoutPlan[] = [
     subtitle: { de: 'Push · Beine · Core · Burnout', en: 'Push · Legs · Core · Burnout' },
     category: 'Kraft',
     duration: 40,
-    icon: 'dumbbell',
-    color: ['#7c3aed', '#5b21b6'],
     sections: [
       {
         id: 'fb-push',
@@ -66,8 +64,6 @@ export const WORKOUT_PLANS: WorkoutPlan[] = [
     subtitle: { de: 'Brust · Schultern · Rücken · Burnout', en: 'Chest · Shoulders · Back · Burnout' },
     category: 'Kraft',
     duration: 35,
-    icon: 'barbell',
-    color: ['#3b82f6', '#0e7490'],
     sections: [
       {
         id: 'ub-chest',
@@ -123,8 +119,6 @@ export const WORKOUT_PLANS: WorkoutPlan[] = [
     subtitle: { de: 'Quads · Hamstrings · Explosiv · Burnout', en: 'Quads · Hamstrings · Explosive · Burnout' },
     category: 'Kraft',
     duration: 35,
-    icon: 'legs',
-    color: ['#f97316', '#b91c1c'],
     sections: [
       {
         id: 'lg-quads',
@@ -182,8 +176,6 @@ export const WORKOUT_PLANS: WorkoutPlan[] = [
     subtitle: { de: 'Vorderseite · Seite · Dynamisch · Burnout', en: 'Front · Side · Dynamic · Burnout' },
     category: 'Core',
     duration: 30,
-    icon: 'core',
-    color: ['#10b981', '#0f766e'],
     sections: [
       {
         id: 'cr-front',
@@ -241,8 +233,6 @@ export const WORKOUT_PLANS: WorkoutPlan[] = [
     subtitle: { de: '15-Minuten Ganzkörper-Circuit', en: '15-Minute Full-Body Circuit' },
     category: 'HIIT',
     duration: 15,
-    icon: 'lightning',
-    color: ['#facc15', '#ea580c'],
     sections: [
       {
         id: 'qk-circuit',
@@ -266,8 +256,6 @@ export const WORKOUT_PLANS: WorkoutPlan[] = [
     subtitle: { de: 'Aufwärmen · Unterkörper · Oberkörper · Cool-down', en: 'Warm-up · Lower Body · Upper Body · Cool-down' },
     category: 'Mobilität',
     duration: 15,
-    icon: 'flower',
-    color: ['#f472b6', '#e11d48'],
     sections: [
       {
         id: 'mb-warmup',
@@ -323,8 +311,6 @@ export const WORKOUT_PLANS: WorkoutPlan[] = [
     subtitle: { de: 'Pull · Rücken · Bizeps · Burnout', en: 'Pull · Back · Biceps · Burnout' },
     category: 'Kraft',
     duration: 35,
-    icon: 'pull',
-    color: ['#0f766e', '#065f46'],
     sections: [
       {
         id: 'pb-back',
@@ -380,8 +366,6 @@ export const WORKOUT_PLANS: WorkoutPlan[] = [
     subtitle: { de: '30/30 Intervalle · Ganzkörper', en: '30/30 Intervals · Full Body' },
     category: 'HIIT',
     duration: 25,
-    icon: 'heart',
-    color: ['#dc2626', '#9f1239'],
     sections: [
       {
         id: 'hc-warmup',
@@ -427,8 +411,6 @@ export const WORKOUT_PLANS: WorkoutPlan[] = [
     subtitle: { de: 'Schultern · Bizeps · Trizeps · Burnout', en: 'Shoulders · Biceps · Triceps · Burnout' },
     category: 'Kraft',
     duration: 30,
-    icon: 'dumbbell',
-    color: ['#7c3aed', '#1d4ed8'],
     sections: [
       {
         id: 'sa-shoulders',
@@ -484,8 +466,6 @@ export const WORKOUT_PLANS: WorkoutPlan[] = [
     subtitle: { de: 'Quads · Gesäß · Hamstrings · Explosiv', en: 'Quads · Glutes · Hamstrings · Explosive' },
     category: 'Kraft',
     duration: 35,
-    icon: 'legs',
-    color: ['#b45309', '#92400e'],
     sections: [
       {
         id: 'lp-quads',

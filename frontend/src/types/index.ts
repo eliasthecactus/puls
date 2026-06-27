@@ -39,7 +39,10 @@ export interface Exercise {
   duration: number;
   reps?: number;
   formTip?: LocalizedString;
-  animationType: AnimationType;
+  /** Legacy stick-figure animation hint. Pool exercises use imageUrl instead. */
+  animationType?: AnimationType;
+  /** Image/GIF URL resolved from the exercise pool. */
+  imageUrl?: string;
   primaryMuscles: MuscleName[];
   secondaryMuscles?: MuscleName[];
 }
@@ -56,15 +59,20 @@ export interface Section {
 
 export type WorkoutIconType = 'dumbbell' | 'barbell' | 'legs' | 'core' | 'lightning' | 'flower' | 'pull' | 'heart';
 
+/**
+ * Runtime, fully-resolved workout (full Exercise objects in each section).
+ * Built from a system or custom plan via lib/training.ts. Duration is computed
+ * from the sections, never stored.
+ */
 export interface WorkoutPlan {
   id: string;
   name: LocalizedString;
   subtitle: LocalizedString;
-  category: string;
-  duration: number;
-  icon: WorkoutIconType;
-  /** Two CSS hex colors for the card gradient, e.g. ['#7c3aed', '#4f46e5'] */
-  color: [string, string];
+  category?: string;
+  /** Computed from sections (minutes). Optional on static fallback data. */
+  duration?: number;
+  /** Marks user-created plans so the UI can route edits to the right place. */
+  isCustom?: boolean;
   sections: Section[];
 }
 
@@ -91,7 +99,9 @@ export interface StreakData {
   totalWorkouts: number;
 }
 
-// Exercise stored in DB (used for custom plans + admin management)
+// Exercise stored in DB (the single source of truth — used by both system and
+// custom trainings, which reference exercises by id). Exercises have no duration
+// of their own; duration is set per-exercise inside a training.
 export interface DbExercise {
   id: string;
   nameDE: string;
@@ -103,46 +113,48 @@ export interface DbExercise {
   imageUrl?: string;
   primaryMuscles: string[];
   secondaryMuscles: string[];
-  duration: number;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface CustomPlanExercise {
+/** A reference to a pool exercise with its per-training duration. */
+export interface RefExercise {
   exerciseId: string;
   duration: number;
 }
 
-export interface CustomPlanSection {
+/** A block within a training. Shared by system + custom plans. */
+export interface RefSection {
   id: string;
   label: string;
   rounds: number;
   restBetweenRounds: number;
   restAfterSection: number;
-  exercises: CustomPlanExercise[];
+  exercises: RefExercise[];
 }
+
+// Backwards-compatible aliases (custom plans use the same ref-based shape).
+export type CustomPlanExercise = RefExercise;
+export type CustomPlanSection = RefSection;
 
 export interface CustomPlan {
   id: string;
   userId: string;
   name: string;
-  sections: CustomPlanSection[];
+  sections: RefSection[];
   createdAt: string;
   updatedAt: string;
 }
 
-// System plan as stored in DB — sections JSON matches WorkoutPlan.sections structure
+// System plan as stored in DB. Single-language content; the name is a planet
+// key resolved to a localized label in the UI. Duration is computed, not stored.
 export interface SystemPlan {
   id: string;
-  planKey: string;
-  name: Record<string, string>;
-  subtitle: Record<string, string>;
+  /** Planet key, e.g. "mercury" — unique across system plans. */
+  planetKey: string;
+  subtitle: string;
   category: string;
-  duration: number;
-  icon: string;
-  color: [string, string];
-  sections: any[];
-  sortOrder: number;
+  sections: RefSection[];
   createdAt: string;
   updatedAt: string;
 }

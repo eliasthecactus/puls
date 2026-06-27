@@ -4,6 +4,7 @@ import { useWorkoutStore } from '@/store/workout';
 import { MuscleGroupView, MuscleTagList } from '@/components/MuscleGroupView';
 import { useT, useLocalStr } from '@/i18n';
 import { useFavoritesStore } from '@/store/favorites';
+import { computeDurationMin } from '@/lib/training';
 import type { WorkoutIntensity, MuscleName } from '@/types';
 
 export function StartScreen() {
@@ -75,7 +76,7 @@ export function StartScreen() {
             <p className="text-white/50 text-xs mb-2">{ls(selectedPlan.subtitle)}</p>
             <div className="flex gap-3">
               {[
-                { label: t.durationLabel, value: `${selectedPlan.duration}m` },
+                { label: t.durationLabel, value: `${selectedPlan.duration ?? computeDurationMin(selectedPlan.sections)}m` },
                 { label: t.exercisesLabel, value: String(totalExercises) },
                 { label: t.blocksLabel, value: String(selectedPlan.sections.length) },
               ].map(({ label, value }) => (

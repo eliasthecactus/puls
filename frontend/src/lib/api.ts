@@ -1,4 +1,11 @@
-import type { WorkoutPlan, WorkoutHistoryEntry, User, StreakData, DbExercise, CustomPlan, AdminUser } from '@/types';
+import type { WorkoutPlan, WorkoutHistoryEntry, User, StreakData, DbExercise, CustomPlan, AdminUser, SystemPlan } from '@/types';
+
+type SystemPlanInput = {
+  planetKey: string;
+  subtitle: string;
+  category: string;
+  sections: SystemPlan['sections'];
+};
 
 const BASE = '/api';
 
@@ -94,9 +101,11 @@ export const api = {
     request<{ token: string; url: string; expiresAt: string }>(`/admin/users/${userId}/reset-token`, { method: 'POST' }),
 
   // System plans (public read, admin write)
-  getSystemPlans: () => request<import('@/types').SystemPlan[]>('/system-plans'),
-  updateSystemPlan: (id: string, data: Partial<import('@/types').SystemPlan>) =>
-    request<import('@/types').SystemPlan>(`/system-plans/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  getSystemPlans: () => request<SystemPlan[]>('/system-plans'),
+  createSystemPlan: (data: SystemPlanInput) =>
+    request<SystemPlan>('/system-plans', { method: 'POST', body: JSON.stringify(data) }),
+  updateSystemPlan: (id: string, data: Partial<SystemPlanInput>) =>
+    request<SystemPlan>(`/system-plans/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteSystemPlan: (id: string) => request<void>(`/system-plans/${id}`, { method: 'DELETE' }),
 
   // Passkey reset

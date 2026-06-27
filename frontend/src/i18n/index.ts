@@ -1,5 +1,6 @@
 import { useI18nStore } from '@/store/i18n';
 import type { LocalizedString } from '@/types';
+import { categoryI18nMap } from '@/data/categories';
 
 export type Language = 'en' | 'de';
 
@@ -27,6 +28,18 @@ export interface Translations {
   readySubtitle: string;
   workoutsSection: string;
   filterAll: string;
+  searchPlaceholder: string;
+  sortLabel: string;
+  sortDefault: string;
+  sortName: string;
+  sortDurationAsc: string;
+  sortDurationDesc: string;
+  durationAll: string;
+  durationShort: string;
+  durationMedium: string;
+  durationLong: string;
+  clearFilters: string;
+  noResults: string;
   recentWorkouts: string;
   totalCount: (n: number) => string;
   noHistory: string;
@@ -112,6 +125,18 @@ const de: Translations = {
   totalCount: (n) => `${n} gesamt`,
   noHistory: 'Noch keine Workouts',
   filterAll: 'Alle',
+  searchPlaceholder: 'Workouts suchen…',
+  sortLabel: 'Sortieren',
+  sortDefault: 'Standard',
+  sortName: 'Name',
+  sortDurationAsc: 'Dauer ↑',
+  sortDurationDesc: 'Dauer ↓',
+  durationAll: 'Alle Längen',
+  durationShort: '≤ 15 Min',
+  durationMedium: '15–30 Min',
+  durationLong: '> 30 Min',
+  clearFilters: 'Filter zurücksetzen',
+  noResults: 'Keine Workouts gefunden',
   retry: 'Erneut versuchen',
   favoritesSection: 'Favoriten',
   today: 'Heute',
@@ -130,7 +155,7 @@ const de: Translations = {
 
   exercisesCount: (n) => `${n} Übungen`,
   blocksCount: (n) => `${n} Blöcke`,
-  categories: { Kraft: 'Kraft', Core: 'Core', HIIT: 'HIIT', Mobilität: 'Mobilität' },
+  categories: categoryI18nMap('de'),
 
   durationLabel: 'Dauer',
   exercisesLabel: 'Übungen',
@@ -206,6 +231,18 @@ const en: Translations = {
   totalCount: (n) => `${n} total`,
   noHistory: 'No workouts yet',
   filterAll: 'All',
+  searchPlaceholder: 'Search workouts…',
+  sortLabel: 'Sort',
+  sortDefault: 'Default',
+  sortName: 'Name',
+  sortDurationAsc: 'Duration ↑',
+  sortDurationDesc: 'Duration ↓',
+  durationAll: 'Any length',
+  durationShort: '≤ 15 min',
+  durationMedium: '15–30 min',
+  durationLong: '> 30 min',
+  clearFilters: 'Clear filters',
+  noResults: 'No workouts found',
   favoritesSection: 'Favorites',
   today: 'Today',
   yesterday: 'Yesterday',
@@ -224,7 +261,7 @@ const en: Translations = {
 
   exercisesCount: (n) => `${n} exercises`,
   blocksCount: (n) => `${n} blocks`,
-  categories: { Kraft: 'Strength', Core: 'Core', HIIT: 'HIIT', Mobilität: 'Mobility' },
+  categories: categoryI18nMap('en'),
 
   durationLabel: 'Duration',
   exercisesLabel: 'Exercises',

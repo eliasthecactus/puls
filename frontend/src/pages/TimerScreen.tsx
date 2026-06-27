@@ -21,7 +21,7 @@ function DemoModal({ children, onClose }: { children: React.ReactNode; onClose: 
   );
 }
 
-const EMPTY_PLAN = { id: '', name: { de: '', en: '' }, subtitle: { de: '', en: '' }, category: '', duration: 0, icon: 'dumbbell' as const, color: ['#000', '#000'] as [string,string], sections: [] };
+const EMPTY_PLAN = { id: '', name: { de: '', en: '' }, subtitle: { de: '', en: '' }, category: '', sections: [] };
 
 export function TimerScreen() {
   const navigate = useNavigate();
@@ -114,7 +114,7 @@ export function TimerScreen() {
     );
   }
 
-  const imgUrl = currentExercise ? EXERCISE_IMAGES[currentExercise.id] : null;
+  const imgUrl = currentExercise ? (currentExercise.imageUrl ?? EXERCISE_IMAGES[currentExercise.id]) : null;
 
   return (
     <div className="h-dvh bg-gray-950 flex flex-col select-none">

@@ -10,10 +10,11 @@ const sectionSchema = z.object({
   id: z.string(),
   label: z.string(),
   rounds: z.number().int().min(1).max(20),
-  restBetweenRounds: z.number().int().min(0).max(300).default(60),
+  restBetweenRounds: z.number().int().min(0).max(600).default(60),
+  restAfterSection: z.number().int().min(0).max(600).default(0),
   exercises: z.array(z.object({
     exerciseId: z.string(),
-    duration: z.number().int().min(5).max(300),
+    duration: z.number().int().min(5).max(600),
   })),
 });
 

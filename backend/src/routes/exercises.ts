@@ -38,7 +38,6 @@ const exerciseSchema = z.object({
   imageUrl: z.string().optional(),
   primaryMuscles: z.array(z.string()).default([]),
   secondaryMuscles: z.array(z.string()).default([]),
-  duration: z.number().int().min(5).max(300).default(30),
 });
 
 // Public — list all exercises

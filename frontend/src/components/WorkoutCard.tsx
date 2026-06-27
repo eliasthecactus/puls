@@ -3,6 +3,8 @@ import Model, { type Muscle, ModelType } from 'react-body-highlighter';
 import type { WorkoutPlan, MuscleName } from '@/types';
 import { useT, useLocalStr } from '@/i18n';
 import { useFavoritesStore } from '@/store/favorites';
+import { computeDurationMin } from '@/lib/training';
+import { categoryChipClass } from '@/data/categories';
 
 interface Props {
   plan: WorkoutPlan;
@@ -15,6 +17,7 @@ export function WorkoutCard({ plan, onClick }: Props) {
   const { toggleFavorite, isFavorite } = useFavoritesStore();
   const favorite = isFavorite(plan.id);
   const totalExercises = plan.sections.reduce((sum, s) => sum + s.exercises.length, 0);
+  const durationMin = plan.duration ?? computeDurationMin(plan.sections);
 
   const { primaryMuscles, secondaryMuscles } = useMemo(() => {
     const primary = Array.from(new Set(
@@ -76,7 +79,7 @@ export function WorkoutCard({ plan, onClick }: Props) {
         </button>
 
         <div className="absolute bottom-2 right-3 text-gray-500 text-xs font-medium z-10">
-          {plan.duration} Min
+          {durationMin} Min
         </div>
       </div>
 
@@ -84,9 +87,11 @@ export function WorkoutCard({ plan, onClick }: Props) {
       <div className="p-4">
         <div className="flex items-start justify-between gap-2 mb-1">
           <h3 className="text-white font-bold text-xl leading-tight tracking-wide">{ls(plan.name)}</h3>
-          <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${categoryColors[plan.category] ?? 'bg-gray-700 text-gray-300'}`}>
-            {t.categories[plan.category] ?? plan.category}
-          </span>
+          {plan.category && (
+            <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${categoryChipClass(plan.category)}`}>
+              {t.categories[plan.category] ?? plan.category}
+            </span>
+          )}
         </div>
         <p className="text-gray-400 text-sm mb-3 h-10 overflow-hidden line-clamp-2">{ls(plan.subtitle)}</p>
 
@@ -114,10 +119,3 @@ export function WorkoutCard({ plan, onClick }: Props) {
     </button>
   );
 }
-
-const categoryColors: Record<string, string> = {
-  Kraft: 'bg-violet-500/20 text-violet-300',
-  Core: 'bg-emerald-500/20 text-emerald-300',
-  HIIT: 'bg-yellow-500/20 text-yellow-300',
-  Mobilität: 'bg-pink-500/20 text-pink-300',
-};

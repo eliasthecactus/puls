@@ -41,7 +41,10 @@ export function SettingsScreen() {
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-gray-950/80 backdrop-blur-xl border-b border-white/5 px-4 py-3">
+      <header
+        className="sticky top-0 z-10 bg-gray-950/80 backdrop-blur-xl border-b border-white/5 px-4 pb-3"
+        style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 0.75rem)' }}
+      >
         <div className="max-w-lg mx-auto flex items-center gap-3">
           <button
             onClick={() => navigate('/')}

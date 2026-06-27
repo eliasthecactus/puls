@@ -1,10 +1,48 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
-import type { DbExercise, AdminUser, SystemPlan } from '@/types';
+import type { DbExercise, AdminUser, SystemPlan, MuscleName } from '@/types';
 import { useAuthStore } from '@/store/auth';
+import { useT } from '@/i18n';
+import { useI18nStore } from '@/store/i18n';
+import { computeRefDurationMin } from '@/lib/training';
+import { planetLabel } from '@/data/planets';
+import { categoryLabel } from '@/data/categories';
 
 type Tab = 'exercises' | 'trainings' | 'users';
+
+const ALL_MUSCLES: MuscleName[] = [
+  'chest', 'upper-back', 'lower-back', 'trapezius', 'front-deltoids', 'back-deltoids',
+  'biceps', 'triceps', 'forearm', 'abs', 'obliques', 'gluteal', 'quadriceps',
+  'hamstring', 'calves', 'adductor', 'abductors', 'neck',
+];
+
+function MuscleMultiSelect({ label, selected, onChange }: {
+  label: string;
+  selected: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const t = useT();
+  function toggle(m: string) {
+    onChange(selected.includes(m) ? selected.filter(x => x !== m) : [...selected, m]);
+  }
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-gray-400 text-xs">{label}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {ALL_MUSCLES.map(m => {
+          const on = selected.includes(m);
+          return (
+            <button key={m} type="button" onClick={() => toggle(m)}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${on ? 'bg-violet-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>
+              {t.muscleNames[m] ?? m}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function BackButton({ onClick }: { onClick: () => void }) {
   return (
@@ -28,7 +66,7 @@ function ExerciseRow({ ex, onEdit, onDelete }: { ex: DbExercise; onEdit: (e: DbE
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-white text-sm font-medium truncate">{ex.nameEN}</div>
-        <div className="text-gray-500 text-xs truncate">{ex.nameDE} · {ex.duration}s · {ex.primaryMuscles.slice(0,2).join(', ')}</div>
+        <div className="text-gray-500 text-xs truncate">{ex.nameDE} · {ex.primaryMuscles.slice(0,3).join(', ')}</div>
       </div>
       <button onClick={() => onEdit(ex)} className="w-8 h-8 bg-white/5 hover:bg-violet-500/20 rounded-lg flex items-center justify-center text-gray-400 hover:text-violet-400 transition-colors">
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,7 +87,7 @@ function ExerciseModal({ exercise, onSave, onClose }: {
   onSave: (data: Partial<DbExercise>, imageFile: File | null) => Promise<void>;
   onClose: () => void;
 }) {
-  const [form, setForm] = useState<Partial<DbExercise>>(exercise ?? { duration: 30, primaryMuscles: [], secondaryMuscles: [] });
+  const [form, setForm] = useState<Partial<DbExercise>>(exercise ?? { primaryMuscles: [], secondaryMuscles: [] });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(exercise?.imageUrl ?? null);
   const [saving, setSaving] = useState(false);
@@ -115,24 +153,15 @@ function ExerciseModal({ exercise, onSave, onClose }: {
             <span className="text-gray-400 text-xs">Form Tip (DE)</span>
             <input className="input" {...field('formTipDE')} />
           </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-gray-400 text-xs">Duration (s)</span>
-            <input type="number" min={5} max={300} className="input"
-              value={form.duration ?? 30}
-              onChange={e => setForm(f => ({ ...f, duration: parseInt(e.target.value) || 30 }))} />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-gray-400 text-xs">Primary Muscles (comma-sep)</span>
-            <input className="input"
-              value={(form.primaryMuscles ?? []).join(', ')}
-              onChange={e => setForm(f => ({ ...f, primaryMuscles: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))} />
-          </label>
-          <label className="col-span-2 flex flex-col gap-1">
-            <span className="text-gray-400 text-xs">Secondary Muscles (comma-sep)</span>
-            <input className="input"
-              value={(form.secondaryMuscles ?? []).join(', ')}
-              onChange={e => setForm(f => ({ ...f, secondaryMuscles: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))} />
-          </label>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <MuscleMultiSelect label="Primary muscles"
+            selected={form.primaryMuscles ?? []}
+            onChange={next => setForm(f => ({ ...f, primaryMuscles: next }))} />
+          <MuscleMultiSelect label="Secondary muscles"
+            selected={form.secondaryMuscles ?? []}
+            onChange={next => setForm(f => ({ ...f, secondaryMuscles: next }))} />
         </div>
 
         <div className="flex items-center gap-3">
@@ -303,16 +332,16 @@ function UsersTab() {
   );
 }
 
-// ── System Plans Tab ─────────────────────────────────────────────────────────
+// ── System Plans (Trainings) Tab ─────────────────────────────────────────────
 
 function SystemPlanRow({ plan, onEdit, onDelete }: { plan: SystemPlan; onEdit: () => void; onDelete: () => void }) {
-  const nameDE = (plan.name as any)?.de ?? '';
-  const nameEN = (plan.name as any)?.en ?? '';
+  const lang = useI18nStore(s => s.language);
+  const minutes = computeRefDurationMin(plan.sections);
   return (
     <div className="flex items-center gap-3 bg-white/5 rounded-xl px-3 py-3">
       <div className="flex-1 min-w-0">
-        <p className="text-white text-sm font-medium truncate">{nameDE} / {nameEN}</p>
-        <p className="text-gray-500 text-xs">{plan.category} · {plan.duration} min · {(plan.sections as any[]).length} blocks</p>
+        <p className="text-white text-sm font-medium truncate">{planetLabel(plan.planetKey, lang)}</p>
+        <p className="text-gray-500 text-xs truncate">{categoryLabel(plan.category, lang)} · {minutes} min · {plan.sections.length} blocks</p>
       </div>
       <button onClick={onEdit} className="w-8 h-8 bg-white/5 hover:bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white transition-colors">
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -328,104 +357,17 @@ function SystemPlanRow({ plan, onEdit, onDelete }: { plan: SystemPlan; onEdit: (
   );
 }
 
-function SystemPlanModal({ plan, onSave, onClose }: { plan: SystemPlan; onSave: (p: SystemPlan) => void; onClose: () => void }) {
-  const [form, setForm] = useState({
-    nameDE: (plan.name as any)?.de ?? '',
-    nameEN: (plan.name as any)?.en ?? '',
-    subtitleDE: (plan.subtitle as any)?.de ?? '',
-    subtitleEN: (plan.subtitle as any)?.en ?? '',
-    category: plan.category,
-    duration: plan.duration,
-    icon: plan.icon,
-    sortOrder: plan.sortOrder,
-  });
-  const [saving, setSaving] = useState(false);
-
-  async function save() {
-    setSaving(true);
-    try {
-      const updated = await api.updateSystemPlan(plan.id, {
-        name: { de: form.nameDE, en: form.nameEN },
-        subtitle: { de: form.subtitleDE, en: form.subtitleEN },
-        category: form.category,
-        duration: form.duration,
-        icon: form.icon,
-        sortOrder: form.sortOrder,
-      });
-      onSave(updated);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center animate-fade-in">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-gray-900 border border-white/10 rounded-t-3xl px-4 pt-5 pb-8 flex flex-col gap-4 animate-slide-up max-h-[80vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="text-white font-bold text-lg">Edit Training</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1">
-            <span className="text-gray-500 text-xs">Name DE</span>
-            <input className="input" value={form.nameDE} onChange={e => setForm(f => ({ ...f, nameDE: e.target.value }))} />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-gray-500 text-xs">Name EN</span>
-            <input className="input" value={form.nameEN} onChange={e => setForm(f => ({ ...f, nameEN: e.target.value }))} />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-gray-500 text-xs">Subtitle DE</span>
-            <input className="input" value={form.subtitleDE} onChange={e => setForm(f => ({ ...f, subtitleDE: e.target.value }))} />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-gray-500 text-xs">Subtitle EN</span>
-            <input className="input" value={form.subtitleEN} onChange={e => setForm(f => ({ ...f, subtitleEN: e.target.value }))} />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-gray-500 text-xs">Category</span>
-            <input className="input" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-gray-500 text-xs">Duration (min)</span>
-            <input type="number" className="input" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: parseInt(e.target.value) || 1 }))} />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-gray-500 text-xs">Icon</span>
-            <input className="input" value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-gray-500 text-xs">Sort Order</span>
-            <input type="number" className="input" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: parseInt(e.target.value) || 0 }))} />
-          </label>
-        </div>
-
-        <div className="flex gap-2 mt-2">
-          <button onClick={onClose} className="btn-secondary flex-1">Cancel</button>
-          <button onClick={save} disabled={saving} className="btn-primary flex-1">{saving ? 'Saving…' : 'Save'}</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SystemPlansTab() {
+  const navigate = useNavigate();
   const [plans, setPlans] = useState<SystemPlan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<SystemPlan | null>(null);
 
   useEffect(() => {
     api.getSystemPlans().then(setPlans).finally(() => setLoading(false));
   }, []);
 
   async function deletePlan(id: string) {
-    if (!confirm('Delete this training plan?')) return;
+    if (!confirm('Delete this training?')) return;
     await api.deleteSystemPlan(id);
     setPlans(prev => prev.filter(p => p.id !== id));
   }
@@ -434,23 +376,22 @@ function SystemPlansTab() {
 
   return (
     <div className="flex flex-col gap-2">
+      <button onClick={() => navigate('/builder?system=new')}
+        className="btn-secondary flex items-center justify-center gap-2 mb-1">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+        New Training
+      </button>
       {plans.map(plan => (
         <SystemPlanRow
           key={plan.id}
           plan={plan}
-          onEdit={() => setEditing(plan)}
+          onEdit={() => navigate(`/builder?system=${plan.id}`)}
           onDelete={() => deletePlan(plan.id)}
         />
       ))}
-      {plans.length === 0 && <p className="text-gray-500 text-center py-8">No system plans found.</p>}
-
-      {editing && (
-        <SystemPlanModal
-          plan={editing}
-          onSave={updated => { setPlans(prev => prev.map(p => p.id === updated.id ? updated : p)); setEditing(null); }}
-          onClose={() => setEditing(null)}
-        />
-      )}
+      {plans.length === 0 && <p className="text-gray-500 text-center py-8">No trainings yet.</p>}
     </div>
   );
 }
