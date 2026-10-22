@@ -40,7 +40,7 @@ export function WorkoutCard({ plan, onClick }: Props) {
   return (
     <button
       onClick={onClick}
-      className="group relative overflow-hidden rounded-2xl bg-gray-900 border border-white/5 text-left transition-all duration-300 hover:scale-[1.02] hover:border-white/10 hover:shadow-2xl hover:shadow-black/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+      className="group relative overflow-hidden rounded-2xl bg-gray-900 border border-white/5 text-left transition-all duration-300 hover:scale-[1.02] hover:border-white/10 hover:shadow-2xl hover:shadow-black/50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
     >
       {/* Header — muscle diagrams */}
       <div className="h-36 relative overflow-hidden flex items-center justify-center bg-gray-950">

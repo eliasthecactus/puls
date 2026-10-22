@@ -26,14 +26,14 @@ router.get('/users', async (_req: Request, res: Response): Promise<void> => {
 });
 
 // Delete user
-router.delete('/users/:id', async (req: Request, res: Response): Promise<void> => {
+router.delete('/users/:id', async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   if (req.params.id === req.user!.id) { res.status(400).json({ error: 'Cannot delete yourself' }); return; }
   await prisma.user.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 
 // Generate passkey reset token (valid 48 hours)
-router.post('/users/:id/reset-token', async (req: Request, res: Response): Promise<void> => {
+router.post('/users/:id/reset-token', async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   const user = await prisma.user.findUnique({ where: { id: req.params.id } });
   if (!user) { res.status(404).json({ error: 'User not found' }); return; }
 

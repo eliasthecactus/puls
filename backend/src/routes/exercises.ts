@@ -9,22 +9,33 @@ import fs from 'fs';
 
 const router = Router();
 
-const UPLOADS_DIR = process.env.UPLOADS_DIR || '/app/uploads/exercises';
+// Same base directory that index.ts serves at /api/uploads. With UPLOADS_DIR set
+// (as in docker-compose) files used to land outside the folder their URL points to.
+const UPLOADS_DIR = path.join(process.env.UPLOADS_DIR || '/app/uploads', 'exercises');
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+// No SVG: it is served from the app's own origin and can carry scripts
+const ALLOWED_IMAGES: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+};
 
 const storage = multer.diskStorage({
   destination: UPLOADS_DIR,
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${Date.now()}${ext}`);
+    cb(null, `${Date.now()}-${crypto.randomUUID()}${ext}`);
   },
 });
 const upload = multer({
   storage,
   limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowed = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-    cb(null, allowed.includes(path.extname(file.originalname).toLowerCase()));
+    const expected = ALLOWED_IMAGES[path.extname(file.originalname).toLowerCase()];
+    cb(null, expected !== undefined && file.mimetype === expected);
   },
 });
 
@@ -55,7 +66,7 @@ router.post('/', authenticate, requireAdmin, async (req: Request, res: Response)
 });
 
 // Admin — update exercise
-router.patch('/:id', authenticate, requireAdmin, async (req: Request, res: Response): Promise<void> => {
+router.patch('/:id', authenticate, requireAdmin, async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   const parsed = exerciseSchema.partial().safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
   const exercise = await prisma.exercise.update({ where: { id: req.params.id }, data: parsed.data });
@@ -63,13 +74,13 @@ router.patch('/:id', authenticate, requireAdmin, async (req: Request, res: Respo
 });
 
 // Admin — delete exercise
-router.delete('/:id', authenticate, requireAdmin, async (req: Request, res: Response): Promise<void> => {
+router.delete('/:id', authenticate, requireAdmin, async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   await prisma.exercise.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 
 // Admin — upload image
-router.post('/:id/image', authenticate, requireAdmin, upload.single('image'), async (req: Request, res: Response): Promise<void> => {
+router.post('/:id/image', authenticate, requireAdmin, upload.single('image'), async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   if (!req.file) { res.status(400).json({ error: 'No file uploaded' }); return; }
   const imageUrl = `/api/uploads/exercises/${req.file.filename}`;
   const exercise = await prisma.exercise.update({ where: { id: req.params.id }, data: { imageUrl } });

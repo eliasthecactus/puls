@@ -74,7 +74,7 @@ export function SettingsScreen() {
                   onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
                   placeholder={t.displayNamePlaceholder}
                   maxLength={64}
-                  className="flex-1 bg-gray-800 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition-colors text-sm"
+                  className="flex-1 bg-gray-800 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-hidden focus:border-violet-500 transition-colors text-sm"
                 />
                 <button
                   onClick={handleSaveName}

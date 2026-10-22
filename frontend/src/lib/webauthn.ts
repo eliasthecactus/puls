@@ -5,13 +5,15 @@ import {
 import type {
   PublicKeyCredentialCreationOptionsJSON,
   PublicKeyCredentialRequestOptionsJSON,
-} from '@simplewebauthn/types';
+} from '@simplewebauthn/browser';
 import { api } from './api';
 import type { User } from '@/types';
 
 export async function registerPasskey(username: string, displayName: string): Promise<User> {
   const options = await api.startRegistration(username, displayName);
-  const credential = await startRegistration(options as unknown as PublicKeyCredentialCreationOptionsJSON);
+  const credential = await startRegistration({
+    optionsJSON: options as unknown as PublicKeyCredentialCreationOptionsJSON,
+  });
   const result = await api.finishRegistration(credential);
   if (!result.verified) throw new Error('Registrierung fehlgeschlagen');
   return result.user;
@@ -19,7 +21,9 @@ export async function registerPasskey(username: string, displayName: string): Pr
 
 export async function loginPasskey(username: string): Promise<User> {
   const options = await api.startLogin(username);
-  const credential = await startAuthentication(options as unknown as PublicKeyCredentialRequestOptionsJSON);
+  const credential = await startAuthentication({
+    optionsJSON: options as unknown as PublicKeyCredentialRequestOptionsJSON,
+  });
   const result = await api.finishLogin(credential);
   if (!result.verified) throw new Error('Anmeldung fehlgeschlagen');
   return result.user;

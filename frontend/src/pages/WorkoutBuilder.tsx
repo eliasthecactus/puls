@@ -178,7 +178,7 @@ export function WorkoutBuilder() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const lang = useI18nStore(s => s.language);
-  const isAdmin = useAuthStore(s => s.user?.username === 'elias');
+  const isAdmin = useAuthStore(s => !!s.user?.isAdmin);
 
   const systemParam = searchParams.get('system'); // '<id>' | 'new' | null
   const editId = searchParams.get('edit');         // custom plan id | null

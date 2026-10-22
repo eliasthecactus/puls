@@ -46,6 +46,7 @@ services:
       NODE_ENV: production
       COOKIE_SECURE: 'false'
       CORS_ORIGIN: http://localhost
+      ADMIN_USERNAMES: your_username
     depends_on:
       postgres:
         condition: service_healthy
@@ -113,6 +114,8 @@ Copy and adjust for production:
 | `ORIGIN` | Full origin URL (e.g. `https://example.com`) |
 | `COOKIE_SECURE` | Set to `true` in production |
 | `CORS_ORIGIN` | Allowed CORS origin |
+| `ADMIN_USERNAMES` | Comma-separated usernames with admin access (none if unset) |
+| `TRUSTED_PROXY_CIDRS` | Extra proxy ranges to trust for client IPs (private networks and Cloudflare are trusted by default) |
 
 ## Versioning
 

@@ -1,6 +1,29 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+/*
+  Tailwind 4 changed a few defaults; these keep the v3 look:
+  borders default to gray-200, placeholders to gray-400, buttons get a pointer.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
 
 @layer base {
   * {
@@ -29,7 +52,7 @@
 
 @layer components {
   .input {
-    @apply bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-600 text-sm outline-none focus:border-violet-500/50 transition-colors w-full;
+    @apply bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-600 text-sm outline-hidden focus:border-violet-500/50 transition-colors w-full;
   }
   .btn-primary {
     @apply bg-violet-600 hover:bg-violet-500 active:scale-95 text-white font-semibold rounded-xl px-5 py-2.5 transition-all disabled:opacity-50 disabled:pointer-events-none;

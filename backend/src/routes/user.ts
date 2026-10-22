@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticate } from '../middleware/authenticate';
 import { z } from 'zod';
+import { adminUsernames } from '../middleware/admin';
 
 const router = Router();
 
@@ -31,10 +32,15 @@ router.put('/profile', async (req: Request, res: Response): Promise<void> => {
     data: { displayName: parsed.data.displayName },
   });
 
-  res.json({ id: user.id, username: user.username, displayName: user.displayName });
+  res.json({
+    id: user.id,
+    username: user.username,
+    displayName: user.displayName,
+    isAdmin: adminUsernames().has(user.username),
+  });
 });
 
-function calculateStreak(dates: Date[]): number {
+export function calculateStreak(dates: Date[]): number {
   if (dates.length === 0) return 0;
 
   const today = new Date();
@@ -51,14 +57,17 @@ function calculateStreak(dates: Date[]): number {
   ].sort((a, b) => b - a);
 
   const todayMs = today.getTime();
-  const yesterdayMs = todayMs - 86400000;
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayMs = yesterday.getTime();
 
   if (uniqueDays[0] !== todayMs && uniqueDays[0] !== yesterdayMs) return 0;
 
   let streak = 1;
   for (let i = 1; i < uniqueDays.length; i++) {
-    const diff = uniqueDays[i - 1] - uniqueDays[i];
-    if (diff === 86400000) {
+    // Rounded: across a DST change two local midnights are 23 or 25 hours apart
+    const diff = Math.round((uniqueDays[i - 1] - uniqueDays[i]) / 86400000);
+    if (diff === 1) {
       streak++;
     } else {
       break;

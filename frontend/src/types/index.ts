@@ -92,6 +92,8 @@ export interface User {
   id: string;
   username: string;
   displayName: string;
+  /** Set by the API from ADMIN_USERNAMES */
+  isAdmin?: boolean;
 }
 
 export interface StreakData {
