@@ -9,68 +9,122 @@ env:
   IMAGE_FRONTEND: ghcr.io/${{ github.repository_owner }}/puls-frontend
   IMAGE_BACKEND: ghcr.io/${{ github.repository_owner }}/puls-backend
 
-jobs:
-  release:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
+# One release at a time; a newer push to main replaces a release still building
+concurrency:
+  group: release
+  cancel-in-progress: true
 
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-
       - name: Compute version
         id: version
         run: |
           MAJOR=$(cat VERSION | tr -d '[:space:]')
           COMMITS=$(git rev-list --count HEAD)
-          VERSION="${MAJOR}.${COMMITS}"
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "tag=v${VERSION}" >> $GITHUB_OUTPUT
-          echo "Releasing v${VERSION}"
+          echo "tag=v${MAJOR}.${COMMITS}" >> $GITHUB_OUTPUT
+          echo "Releasing v${MAJOR}.${COMMITS}"
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+  # Each architecture builds on its own native runner. arm64 used to build under QEMU
+  # emulation on an x86 runner, which took hours for the backend.
+  build:
+    needs: version
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        image: [frontend, backend]
+        arch: [amd64, arm64]
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push frontend
-        uses: docker/build-push-action@v5
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v6
         with:
-          context: ./frontend
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ env.IMAGE_FRONTEND }}:latest
-            ${{ env.IMAGE_FRONTEND }}:${{ steps.version.outputs.tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          context: ./${{ matrix.image }}
+          platforms: linux/${{ matrix.arch }}
+          outputs: type=image,name=${{ matrix.image == 'frontend' && env.IMAGE_FRONTEND || env.IMAGE_BACKEND }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.arch }}
 
-      - name: Build and push backend
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ env.IMAGE_BACKEND }}:latest
-            ${{ env.IMAGE_BACKEND }}:${{ steps.version.outputs.tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
 
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+      - uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.tag }}
+          name: digest-${{ matrix.image }}-${{ matrix.arch }}
+          path: /tmp/digests/*
+          retention-days: 1
+
+  # Combines the amd64 and arm64 images into one multi-arch tag
+  merge:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        image: [frontend, backend]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digest-${{ matrix.image }}-*
+          merge-multiple: true
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Create multi-arch tags
+        working-directory: /tmp/digests
+        env:
+          IMAGE: ${{ matrix.image == 'frontend' && env.IMAGE_FRONTEND || env.IMAGE_BACKEND }}
+        run: |
+          docker buildx imagetools create \
+            -t "$IMAGE:latest" \
+            -t "$IMAGE:${{ needs.version.outputs.tag }}" \
+            $(printf "$IMAGE@sha256:%s " *)
+          docker buildx imagetools inspect "$IMAGE:${{ needs.version.outputs.tag }}"
+
+  release:
+    needs: [version, merge]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.version.outputs.tag }}
+          name: ${{ needs.version.outputs.tag }}
           generate_release_notes: true
