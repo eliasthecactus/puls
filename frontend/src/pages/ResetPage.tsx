@@ -29,7 +29,7 @@ export function ResetPage() {
     setRegistering(true);
     try {
       const options = await api.startPasskeyReset(token);
-      const credential = await startRegistration(options as unknown as any);
+      const credential = await startRegistration({ optionsJSON: options as unknown as any });
       const result = await api.finishPasskeyReset(token, credential);
       if (result.verified) {
         setUser(result.user);

@@ -40,7 +40,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   res.status(201).json(plan);
 });
 
-router.patch('/:id', async (req: Request, res: Response): Promise<void> => {
+router.patch('/:id', async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   const existing = await prisma.customPlan.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!existing) { res.status(404).json({ error: 'Not found' }); return; }
   const parsed = planSchema.partial().safeParse(req.body);
@@ -52,7 +52,7 @@ router.patch('/:id', async (req: Request, res: Response): Promise<void> => {
   res.json(plan);
 });
 
-router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
+router.delete('/:id', async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   const existing = await prisma.customPlan.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!existing) { res.status(404).json({ error: 'Not found' }); return; }
   await prisma.customPlan.delete({ where: { id: req.params.id } });

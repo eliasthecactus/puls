@@ -327,7 +327,7 @@ router.get('/', (_req: Request, res: Response): void => {
   res.json(workoutPlans);
 });
 
-router.get('/:id', (req: Request, res: Response): void => {
+router.get('/:id', (req: Request<{ id: string }>, res: Response): void => {
   const plan = workoutPlans.find((p) => p.id === req.params.id);
   if (!plan) {
     res.status(404).json({ error: 'Workout not found' });

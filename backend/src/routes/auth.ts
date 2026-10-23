@@ -8,13 +8,23 @@ import {
 import type {
   RegistrationResponseJSON,
   AuthenticationResponseJSON,
-  AuthenticatorDevice,
-  AuthenticatorTransportFuture,
-} from '@simplewebauthn/types';
+  AuthenticatorTransport,
+  WebAuthnCredential,
+} from '@simplewebauthn/server';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
+import { adminUsernames } from '../middleware/admin';
 
 const router = Router();
+
+function publicUser(user: { id: string; username: string; displayName: string }) {
+  return {
+    id: user.id,
+    username: user.username,
+    displayName: user.displayName,
+    isAdmin: adminUsernames().has(user.username),
+  };
+}
 
 const RPID = process.env.RPID || 'localhost';
 const ORIGIN = process.env.ORIGIN || 'http://localhost';
@@ -97,9 +107,9 @@ router.post('/register/finish', async (req: Request, res: Response): Promise<voi
   }
 
   const { registrationInfo } = verification;
-  const credentialId = registrationInfo.credentialID;
-  const publicKey = Buffer.from(registrationInfo.credentialPublicKey);
-  const counter = registrationInfo.counter;
+  const credentialId = registrationInfo.credential.id;
+  const publicKey = Buffer.from(registrationInfo.credential.publicKey);
+  const counter = registrationInfo.credential.counter;
   const deviceType = registrationInfo.credentialDeviceType;
   const backedUp = registrationInfo.credentialBackedUp;
 
@@ -129,7 +139,7 @@ router.post('/register/finish', async (req: Request, res: Response): Promise<voi
   await new Promise<void>((resolve, reject) => req.session.save((e) => (e ? reject(e) : resolve())));
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  res.json({ verified: true, user: { id: user!.id, username: user!.username, displayName: user!.displayName } });
+  res.json({ verified: true, user: publicUser(user!) });
 });
 
 router.post('/login/start', async (req: Request, res: Response): Promise<void> => {
@@ -155,7 +165,7 @@ router.post('/login/start', async (req: Request, res: Response): Promise<void> =
     userVerification: 'preferred',
     allowCredentials: user.credentials.map((c) => ({
       id: c.credentialId,
-      transports: c.transports as AuthenticatorTransportFuture[],
+      transports: c.transports as AuthenticatorTransport[],
     })),
   });
 
@@ -189,11 +199,11 @@ router.post('/login/finish', async (req: Request, res: Response): Promise<void> 
     return;
   }
 
-  const authenticator: AuthenticatorDevice = {
-    credentialID: dbCredential.credentialId,
-    credentialPublicKey: new Uint8Array(dbCredential.publicKey),
+  const credential: WebAuthnCredential = {
+    id: dbCredential.credentialId,
+    publicKey: new Uint8Array(dbCredential.publicKey),
     counter: Number(dbCredential.counter),
-    transports: dbCredential.transports as AuthenticatorTransportFuture[],
+    transports: dbCredential.transports as AuthenticatorTransport[],
   };
 
   const verification = await verifyAuthenticationResponse({
@@ -201,7 +211,7 @@ router.post('/login/finish', async (req: Request, res: Response): Promise<void> 
     expectedChallenge: challenge,
     expectedOrigin: ORIGIN,
     expectedRPID: RPID,
-    authenticator,
+    credential,
   });
 
   if (!verification.verified) {
@@ -220,11 +230,11 @@ router.post('/login/finish', async (req: Request, res: Response): Promise<void> 
   await new Promise<void>((resolve, reject) => req.session.save((e) => (e ? reject(e) : resolve())));
 
   const user = dbCredential.user;
-  res.json({ verified: true, user: { id: user.id, username: user.username, displayName: user.displayName } });
+  res.json({ verified: true, user: publicUser(user) });
 });
 
 // Validate a passkey reset token
-router.get('/reset/:token', async (req: Request, res: Response): Promise<void> => {
+router.get('/reset/:token', async (req: Request<{ token: string }>, res: Response): Promise<void> => {
   const record = await prisma.passkeyResetToken.findUnique({
     where: { token: req.params.token },
     include: { user: true },
@@ -237,7 +247,7 @@ router.get('/reset/:token', async (req: Request, res: Response): Promise<void> =
 });
 
 // Start passkey registration via reset token
-router.post('/reset/:token/start', async (req: Request, res: Response): Promise<void> => {
+router.post('/reset/:token/start', async (req: Request<{ token: string }>, res: Response): Promise<void> => {
   const record = await prisma.passkeyResetToken.findUnique({
     where: { token: req.params.token },
     include: { user: { include: { credentials: true } } },
@@ -269,7 +279,7 @@ router.post('/reset/:token/start', async (req: Request, res: Response): Promise<
 });
 
 // Finish passkey registration via reset token
-router.post('/reset/:token/finish', async (req: Request, res: Response): Promise<void> => {
+router.post('/reset/:token/finish', async (req: Request<{ token: string }>, res: Response): Promise<void> => {
   const s = sess(req);
   const challenge = s['challenge'] as string | undefined;
   const resetUserId = s['resetUserId'] as string | undefined;
@@ -303,9 +313,9 @@ router.post('/reset/:token/finish', async (req: Request, res: Response): Promise
   await prisma.credential.create({
     data: {
       userId: resetUserId,
-      credentialId: registrationInfo.credentialID,
-      publicKey: Buffer.from(registrationInfo.credentialPublicKey),
-      counter: registrationInfo.counter,
+      credentialId: registrationInfo.credential.id,
+      publicKey: Buffer.from(registrationInfo.credential.publicKey),
+      counter: registrationInfo.credential.counter,
       deviceType: registrationInfo.credentialDeviceType,
       backedUp: registrationInfo.credentialBackedUp,
       transports: body.response.transports ?? [],
@@ -321,7 +331,7 @@ router.post('/reset/:token/finish', async (req: Request, res: Response): Promise
   await new Promise<void>((resolve, reject) => req.session.save((e) => (e ? reject(e) : resolve())));
 
   const user = await prisma.user.findUnique({ where: { id: resetUserId } });
-  res.json({ verified: true, user: { id: user!.id, username: user!.username, displayName: user!.displayName } });
+  res.json({ verified: true, user: publicUser(user!) });
 });
 
 router.post('/logout', (req: Request, res: Response): void => {
@@ -349,7 +359,7 @@ router.get('/me', async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  res.json({ user: { id: user.id, username: user.username, displayName: user.displayName } });
+  res.json({ user: publicUser(user) });
 });
 
 export default router;

@@ -82,7 +82,7 @@ export function AuthModal({ onClose }: Props) {
               placeholder="z.B. max_muster"
               autoComplete="username"
               required
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-violet-500 transition-colors"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 text-sm focus:outline-hidden focus:border-violet-500 transition-colors"
             />
           </div>
 
@@ -96,7 +96,7 @@ export function AuthModal({ onClose }: Props) {
                 placeholder="z.B. Max Muster"
                 autoComplete="name"
                 required
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 text-sm focus:outline-hidden focus:border-violet-500 transition-colors"
               />
             </div>
           )}

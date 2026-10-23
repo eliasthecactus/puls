@@ -403,7 +403,7 @@ export function AdminPage() {
   const user = useAuthStore(s => s.user);
   const [tab, setTab] = useState<Tab>('exercises');
 
-  if (user?.username !== 'elias') {
+  if (!user?.isAdmin) {
     return (
       <div className="h-dvh bg-gray-950 flex items-center justify-center">
         <p className="text-gray-500">Access denied.</p>

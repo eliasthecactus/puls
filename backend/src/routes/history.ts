@@ -37,7 +37,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   res.status(201).json(entry);
 });
 
-router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
+router.delete('/:id', async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   const entry = await prisma.workoutHistory.findFirst({
     where: { id: req.params.id, userId: req.user!.id },
   });

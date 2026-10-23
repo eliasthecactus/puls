@@ -49,7 +49,7 @@ router.post('/', authenticate, requireAdmin, async (req: Request, res: Response)
 });
 
 // Admin — update system plan
-router.patch('/:id', authenticate, requireAdmin, async (req: Request, res: Response): Promise<void> => {
+router.patch('/:id', authenticate, requireAdmin, async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   const parsed = planSchema.partial().safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
   // Guard planetKey uniqueness when renaming
@@ -67,7 +67,7 @@ router.patch('/:id', authenticate, requireAdmin, async (req: Request, res: Respo
 });
 
 // Admin — delete system plan
-router.delete('/:id', authenticate, requireAdmin, async (req: Request, res: Response): Promise<void> => {
+router.delete('/:id', authenticate, requireAdmin, async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   await prisma.systemPlan.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });

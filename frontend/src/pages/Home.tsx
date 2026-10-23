@@ -26,9 +26,9 @@ function WorkoutCardSkeleton() {
     <div className="rounded-2xl bg-gray-900 border border-white/5 overflow-hidden animate-pulse">
       <div className="h-28 bg-gray-800" />
       <div className="p-4 space-y-2">
-        <div className="h-5 bg-gray-800 rounded w-3/4" />
-        <div className="h-3 bg-gray-800 rounded w-full" />
-        <div className="h-3 bg-gray-800 rounded w-1/2" />
+        <div className="h-5 bg-gray-800 rounded-sm w-3/4" />
+        <div className="h-3 bg-gray-800 rounded-sm w-full" />
+        <div className="h-3 bg-gray-800 rounded-sm w-1/2" />
       </div>
     </div>
   );
@@ -144,7 +144,7 @@ export function Home() {
 
           <div className="flex items-center gap-2">
             <span className="text-gray-400 text-sm hidden sm:block">{user?.displayName}</span>
-            {user?.username === 'elias' && (
+            {user?.isAdmin && (
               <button
                 onClick={() => navigate('/admin')}
                 className="text-gray-500 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5"
